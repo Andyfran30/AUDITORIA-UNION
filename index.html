@@ -626,7 +626,9 @@ function rTabBloques(tipo,idx){
   var saved=tipo==='j'?(cur.entrevista_jefe||{}):(cur.entrevista_asistencial||{});
   var tNombre=tipo==='j'?'jefe':'asistencial';
   var auds=(cur.audios||[]).filter(function(a){return a.tipo===tNombre;});
-  var audHtml=auds.map(function(a){return '<div class="audio-item"><i class="ti ti-file-music" style="font-size:15px;color:#888"></i><span>'+a.hora+'</span>'+(a.url?'<audio controls src="'+a.url+'" style="height:28px;flex-shrink:0"></audio>':'')+'</div>';}).join('');
+  var audHtml=auds.map(function(a){
+    return '<div class="audio-item"><i class="ti ti-file-music" style="font-size:15px;color:#888"></i><span>'+a.hora+'</span>'+(a.url?'<audio controls src="'+a.url+'" style="height:28px;flex-shrink:0"></audio>':'')+'</div>';
+  }).join('');
   var bloqueIdx=bloqueActual[tipo]||0;
   var totalBloques=preg.length;
   var dots=preg.map(function(_,i){
@@ -635,10 +637,24 @@ function rTabBloques(tipo,idx){
   }).join('');
   var pregsHtml=preg[bloqueIdx].p.map(function(p,pi){
     var k=bloqueIdx+'_'+pi;
-    return '<div class="preg-item"><div class="preg-num">'+( pi+1)+' / '+preg[bloqueIdx].p.length+'</div>'+
+    return '<div class="preg-item">'+
+      '<div class="preg-num">'+(pi+1)+' / '+preg[bloqueIdx].p.length+'</div>'+
       '<div class="preg-txt">'+p+'</div>'+
-      '<textarea oninput="guardarP(\''+tipo+'\','+idx+',\''+k+'\',this.value)" placeholder="Respuesta...">'+( saved[k]||'')+'</textarea></div>';
+      '<textarea oninput="guardarP(\''+tipo+'\','+idx+',\''+k+'\',this.value)" placeholder="Respuesta...">'+(saved[k]||'')+'</textarea>'+
+    '</div>';
   }).join('');
+
+  // Resumen IA guardado previamente
+  var resumenes=cur.resumenes_ia||{};
+  var resHtml=resumenes[tipo]?
+    '<div class="ia-resultado" style="margin-top:0">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'+
+        '<span style="font-size:11px;font-weight:700;color:#1B2A4A;text-transform:uppercase;letter-spacing:.05em">Resumen IA guardado</span>'+
+        '<button onclick="copiarResumenGuardado(\''+tipo+'\','+idx+')" style="font-size:11px;border:1px solid #DDD;background:#fff;padding:3px 7px;border-radius:6px;cursor:pointer">Copiar</button>'+
+      '</div>'+
+      resumenes[tipo]+
+    '</div>' : '';
+
   return '<div style="padding:14px 16px 0">'+
     '<div id="av-'+tipo+'" class="aviso"></div>'+
     '<button class="grab-mini" id="gb-'+tipo+'" onclick="toggleGrab(\''+tipo+'\')">'+
@@ -667,8 +683,11 @@ function rTabBloques(tipo,idx){
         (bloqueIdx===totalBloques-1?'Completado ✓':'Siguiente <i class="ti ti-arrow-right" style="font-size:15px"></i>')+
       '</button>'+
     '</div>'+
-    '<button class="btn-ia" onclick="resumirConIA(\''+tipo+'\','+idx+')"><i class="ti ti-sparkles" style="font-size:16px"></i> Resumir entrevista con IA</button>'+
+    '<button class="btn-ia" id="btn-ia-'+tipo+'" onclick="resumirConIA(\''+tipo+'\','+idx+')">'+
+      '<i class="ti ti-sparkles" style="font-size:16px"></i> Resumir entrevista completa con IA'+
+    '</button>'+
     '<div id="ia-resultado-'+tipo+'" class="ia-resultado" style="display:none"></div>'+
+    resHtml+
   '</div>';
 }
 
@@ -894,6 +913,17 @@ function resetearVisita(){
 // ============================================================
 // RESUMIR CON IA — Claude API
 // ============================================================
+function copiarResumenGuardado(tipo, idx) {
+  var cur = STATE[SD[idx].c] || {};
+  var resumenes = cur.resumenes_ia || {};
+  var texto = resumenes[tipo] || '';
+  // Strip HTML tags para copiar texto plano
+  var tmp = document.createElement('div');
+  tmp.innerHTML = texto;
+  var plain = tmp.innerText || tmp.textContent || texto;
+  navigator.clipboard.writeText(plain).then(function() { toast('Copiado al portapapeles ✓'); });
+}
+
 function resumirConIA(tipo, idx) {
   var preg = tipo === 'j' ? PJ : PA;
   var cur = STATE[SD[idx].c] || {};
@@ -971,12 +1001,14 @@ function resumirConIA(tipo, idx) {
       '<span style="font-size:11px;font-weight:700;color:#1B2A4A;text-transform:uppercase;letter-spacing:.05em">Resumen IA — ' + tNombre + '</span>'+
       '<button onclick="copiarResumen('ia-resultado-' + tipo + '')" style="font-size:11px;border:1px solid #DDD;background:#fff;padding:4px 8px;border-radius:6px;cursor:pointer">Copiar</button>'+
       '</div>' + texto;
-    // Guardar el resumen en Firestore
+    // Guardar en STATE y Firestore
     var clave = s.c;
     if (!STATE[clave]) STATE[clave] = {};
     if (!STATE[clave].resumenes_ia) STATE[clave].resumenes_ia = {};
     STATE[clave].resumenes_ia[tipo] = texto;
     guardarServicio(idx);
+    // Re-renderizar el tab para mostrar el resumen guardado
+    document.getElementById('tc-'+tipo).innerHTML = rTabBloques(tipo, idx);
     toast('Resumen generado ✓');
   })
   .catch(function(e) {
