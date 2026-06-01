@@ -1034,29 +1034,27 @@ function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.c
 // INIT
 // ============================================================
 window.addEventListener('load',function(){
-  // Timeout de seguridad: si Firestore no responde en 8s, arranca igual
-  var cargado = false;
-  var timeout = setTimeout(function(){
-    if(!cargado){
-      console.warn('Firestore timeout — arrancando con datos locales');
-      arrancar();
-    }
-  }, 8000);
+  // Arrancar inmediatamente sin esperar Firestore
+  document.getElementById('loading').style.display='none';
+  renderHomeCards();
+  renderSidebar();
+  mostrarMovil('home');
 
-  function arrancar(){
-    if(cargado) return;
-    cargado = true;
-    clearTimeout(timeout);
-    document.getElementById('loading').style.display='none';
+  // Cargar Firestore en segundo plano y actualizar cuando llegue
+  cargarDesdeFirestore(function(){
     var ht=document.getElementById('h-txt'),pt=document.getElementById('p-txt');
-    if(ht)ht.value=STATE['_h']||'';
-    if(pt)pt.value=STATE['_p']||'';
+    if(ht) ht.value=STATE['_h']||'';
+    if(pt) pt.value=STATE['_p']||'';
     renderHomeCards();
     renderSidebar();
-    mostrarMovil('home');
-  }
-
-  cargarDesdeFirestore(function(){ arrancar(); });
+    // Si hay un servicio abierto, actualizarlo también
+    var fichaVisible = document.getElementById('ficha-contenido');
+    if(fichaVisible && fichaVisible.style.display!=='none'){
+      renderFicha(sIdx);
+      actuBadgeFicha(sIdx);
+    }
+    toast('Datos sincronizados con Firebase ✓');
+  });
 });
 </script>
 </body>
