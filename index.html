@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Relevamiento Anchorena Recoleta</title>
+<title>Relevamiento de Terreno</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -124,7 +124,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div id="screen-home" class="screen active">
   <div class="header">
     <div style="flex:1">
-      <div class="sub">Auditoría Anchorena Recoleta · Visita 1</div>
+      <div class="sub">Auditoría · Visita 1</div>
       <h1>Servicios a relevar</h1>
     </div>
   </div>
@@ -476,7 +476,7 @@ function subirFoto(src,servicio){llamarScript({action:'guardarFoto',base64:src,s
 function guardarHallazgos(){localStorage.setItem('hallazgos',document.getElementById('hallazgos-txt').value);localStorage.setItem('pendientes',document.getElementById('pendientes-txt').value);}
 
 function generarResumen(){
-  var r='RESUMEN DE CIERRE — VISITA 1 ANCHORENA RECOLETA\n\n';
+  var r='RESUMEN DE CIERRE — VISITA 1\n\n';
   SD.forEach(function(s,idx){r+='=== '+s.n.toUpperCase()+' ===\nEstado: '+estados[idx]+'\nResponsable presente: '+(jefes[idx]||s.jd)+'\nNotas: '+(localStorage.getItem('notas_'+idx)||'(sin notas)')+'\n\n';});
   r+='HALLAZGOS:\n'+(localStorage.getItem('hallazgos')||'')+'\n\nPENDIENTES:\n'+(localStorage.getItem('pendientes')||'');
   var w=window.open('','_blank');if(w){w.document.write('<pre style="font-family:monospace;padding:20px;font-size:14px;line-height:1.8">'+r+'</pre>');}
