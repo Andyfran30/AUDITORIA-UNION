@@ -6,6 +6,7 @@
 <title>Relevamiento de Terreno</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -85,9 +86,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .audio-item{display:flex;align-items:center;gap:8px;padding:9px 12px;background:#fff;border:1px solid #e5e5e5;border-radius:10px;margin-bottom:6px}
 .audio-item span{font-size:12px;color:#666;flex:1}
 .aviso{border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12px;line-height:1.6;display:none}
-.aviso.warn{background:#FEF3C7;border:1px solid #FDE68A;color:#92400E}
 .aviso.err{background:#FEE2E2;border:1px solid #FECACA;color:#991B1B}
-.aviso.ok{background:#D1FAE5;border:1px solid #6EE7B7;color:#065F46}
 .aviso strong{display:block;margin-bottom:2px;font-size:13px}
 .foto-ops{display:flex;gap:8px;margin-bottom:10px}
 .foto-op{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:14px 8px;border-radius:12px;border:1.5px solid #ddd;background:#fff;cursor:pointer;font-size:13px;font-weight:700;color:#1a1a1a;min-height:68px}
@@ -117,6 +116,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:10px 18px;border-radius:22px;font-size:13px;font-weight:600;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;max-width:90vw;text-align:center}
 .toast.show{opacity:1}
 .reset-btn{width:100%;padding:12px;border-radius:10px;border:1px solid #FECACA;background:#FEE2E2;color:#991B1B;font-size:13px;font-weight:700;cursor:pointer;margin-top:12px}
+.sync-row{display:flex;align-items:center;gap:8px;padding:8px 12px;background:#E6F1FB;border-radius:8px;font-size:12px;color:#185FA5;margin-bottom:8px}
 </style>
 </head>
 <body>
@@ -129,6 +129,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div class="sub">Auditoría · Visita 1</div>
       <h1>Servicios a relevar</h1>
     </div>
+    <div id="sync-status" style="font-size:11px;color:#1D9E75;font-weight:600"></div>
   </div>
   <div class="progreso-bar"><div class="progreso-fill" id="prog-fill" style="width:0%"></div></div>
   <div class="progreso-texto" id="prog-txt">0 de 7 servicios relevados</div>
@@ -213,11 +214,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div class="header"><h1>Hallazgos del día</h1></div>
   <div style="padding:14px 16px;background:#fff">
     <div style="font-size:12px;color:#888;font-weight:700;margin-bottom:6px">Tres hallazgos más relevantes</div>
-    <textarea id="h-txt" style="width:100%;min-height:110px;font-size:14px;padding:10px;border:1px solid #ddd;border-radius:10px;background:#fff;color:#1a1a1a;resize:none;font-family:inherit;line-height:1.6" placeholder="1. &#10;2. &#10;3. " oninput="ls('hallazgos',this.value)"></textarea>
+    <textarea id="h-txt" style="width:100%;min-height:110px;font-size:14px;padding:10px;border:1px solid #ddd;border-radius:10px;background:#fff;color:#1a1a1a;resize:none;font-family:inherit;line-height:1.6" placeholder="1. &#10;2. &#10;3. " oninput="guardarHallazgos()"></textarea>
     <div style="font-size:12px;color:#888;font-weight:700;margin:12px 0 6px">Pendientes / segunda visita</div>
-    <textarea id="p-txt" style="width:100%;min-height:80px;font-size:14px;padding:10px;border:1px solid #ddd;border-radius:10px;background:#fff;color:#1a1a1a;resize:none;font-family:inherit;line-height:1.6" placeholder="Servicios no relevados, info comprometida..." oninput="ls('pendientes',this.value)"></textarea>
+    <textarea id="p-txt" style="width:100%;min-height:80px;font-size:14px;padding:10px;border:1px solid #ddd;border-radius:10px;background:#fff;color:#1a1a1a;resize:none;font-family:inherit;line-height:1.6" placeholder="Servicios no relevados, info comprometida..." oninput="guardarHallazgos()"></textarea>
     <button style="width:100%;margin-top:14px;padding:14px;border-radius:12px;border:2px solid #1D9E75;background:#D1FAE5;color:#065F46;font-size:14px;font-weight:700;cursor:pointer" onclick="generarResumen()">Generar resumen de cierre →</button>
-    <button class="reset-btn" onclick="resetearVisita()"><i class="ti ti-refresh" style="font-size:15px;vertical-align:-2px"></i> Resetear visita (borrar todo)</button>
+    <button class="reset-btn" onclick="resetearVisita()"><i class="ti ti-refresh" style="font-size:14px;vertical-align:-2px"></i> Resetear visita (borrar todo)</button>
   </div>
   <div style="height:80px"></div>
   <div class="nav">
@@ -229,10 +230,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <script>
 // ============================================================
-// CONFIG
+// FIREBASE INIT
 // ============================================================
-var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyRQJPYfqnwIXjnu-ikZvlCWSLT27xLBswZQyiW4OAwS_SFqhiSLvAW_1OKEL-PFWIJ/exec';
-
 firebase.initializeApp({
   apiKey: "AIzaSyDx16ACULGQKr8lQPewO_VPWelmWPFr9_I",
   authDomain: "auditoria-union-personal.firebaseapp.com",
@@ -241,10 +240,12 @@ firebase.initializeApp({
   messagingSenderId: "180847603291",
   appId: "1:180847603291:web:14b93af9c6770b37f9597e"
 });
+var db = firebase.firestore();
 var storage = firebase.storage();
+var VISITA_ID = 'visita_1_recoleta';
 
 // ============================================================
-// DATOS
+// DATOS ESTÁTICOS
 // ============================================================
 var SD = [
   {n:'UTI adultos',c:'UTI',jd:'Dra. Daniela Vásquez',org:[{i:'DV',n:'Dra. Daniela Vásquez',r:'Jefa de servicio'},{i:'SC',n:'Sánchez, Carla',r:'Coordinadora'},{i:'SE',n:'Eiguren, Sebastián',r:'Coordinador'}]},
@@ -255,7 +256,6 @@ var SD = [
   {n:'Maternidad / obstetricia',c:'Maternidad',jd:'Dr. Rubén Almada',org:[{i:'RA',n:'Dr. Rubén Almada',r:'Jefe de servicio'},{i:'FF',n:'Faccipieri, Fernanda',r:'Coordinadora'}]},
   {n:'Guardia central',c:'Guardia',jd:'Dr. Diego Agazzi',org:[{i:'DA',n:'Dr. Diego Agazzi',r:'Jefe de guardia externa'},{i:'CM',n:'Ciampi, María',r:'Coordinadora demanda espontánea'}]}
 ];
-
 var CLI = [
   {l:'Accesibilidad y señalización del área',k:'acc'},
   {l:'Estado de infraestructura (paredes, pisos, techos)',k:'inf'},
@@ -268,297 +268,268 @@ var CLI = [
   {l:'Registro en Thinksoft: ¿tiempo real o diferido?',k:'thi'},
   {l:'Carga del dato: ¿completa, parcial o ausente?',k:'dat'}
 ];
-
 var PJ = [
   {b:'Producción y operación',p:['¿Cuál es la producción habitual del servicio por mes?','¿Esa producción está registrada en Thinksoft? ¿Hay brechas?','¿Cuántas camas tiene y cuál es el % de ocupación habitual?','¿Cuántos pacientes internados tiene y de qué obra social son?','¿Hay prestaciones que se realizan pero no se facturan? ¿Por qué?']},
-  {b:'Dotación y RRHH',p:['¿Con cuántas personas trabaja en cada turno? ¿Es la dotación adecuada?','¿Hay personal tercerizado? ¿Qué funciones cumplen?','¿Cuáles son los principales cuellos de botella del día a día?','¿Qué servicios tercerizados externos utiliza (limpieza, mantenimiento, vigilancia)?']},
+  {b:'Dotación y RRHH',p:['¿Con cuántas personas trabaja en cada turno? ¿Es la dotación adecuada?','¿Hay personal tercerizado? ¿Qué funciones cumplen?','¿Cuáles son los principales cuellos de botella del día a día?','¿Qué servicios tercerizados externos utiliza?']},
   {b:'Sistema / Thinksoft',p:['¿El equipo usa Thinksoft habitualmente? ¿Qué tan completa es la carga?','¿Quién carga los datos — el asistencial, el administrativo o ambos?','¿Hay prestaciones sin código en Thinksoft o que se registran manualmente?','¿Recibe reportes del sistema para gestionar el servicio?']},
-  {b:'Mirada de red',p:['¿Derivan pacientes hacia otros establecimientos de la red? ¿Reciben derivados?','¿Existe protocolo formal de derivación o funciona de manera informal?','¿Comparten protocolos clínicos con los otros establecimientos?','¿Cómo calificaría la articulación con el resto de la red del 1 al 5?']}
+  {b:'Mirada de red',p:['¿Derivan pacientes hacia otros establecimientos? ¿Reciben derivados?','¿Existe protocolo formal de derivación o es informal?','¿Comparten protocolos clínicos con los otros establecimientos?','¿Cómo calificaría la articulación con el resto de la red del 1 al 5?']}
 ];
-
 var PA = [
-  {b:'Trabajo cotidiano',p:['¿Cómo es un turno típico? ¿Cuál es la carga de trabajo habitual?','¿Siente que la dotación es suficiente para la demanda?','¿Cuáles son los principales problemas del día a día que impactan en la atención?','¿Hay insumos o equipos que faltan habitualmente?']},
+  {b:'Trabajo cotidiano',p:['¿Cómo es un turno típico? ¿Cuál es la carga habitual?','¿Siente que la dotación es suficiente para la demanda?','¿Cuáles son los principales problemas del día a día?','¿Hay insumos o equipos que faltan habitualmente?']},
   {b:'Registro y sistema',p:['¿Usted carga datos en Thinksoft? ¿Qué carga y con qué frecuencia?','¿Hay prestaciones que realiza y que sabe que no quedan registradas?','¿Cuánto tiempo le lleva el registro administrativo en un turno?']},
-  {b:'Pacientes y facturación',p:['¿Sabe de qué obra social son los pacientes? ¿Lo ve en el sistema?','¿Reciben pacientes derivados de otros establecimientos? ¿Cómo llegan?','¿Hay situaciones donde se presta atención y percibe que no se cobró?']}
+  {b:'Pacientes y facturación',p:['¿Sabe de qué obra social son los pacientes? ¿Lo ve en el sistema?','¿Reciben pacientes derivados de otros establecimientos?','¿Hay situaciones donde se presta atención y percibe que no se cobró?']}
 ];
 
 // ============================================================
-// ESTADO
+// ESTADO LOCAL
 // ============================================================
 var sIdx = 0;
-var mrecs = {}, gtimers = {}, gseg = {jefe:0, asistencial:0};
-var stout = null;
+var mrecs={}, gtimers={}, gseg={j:0,a:0}, stout=null;
 
-function ls(k, v) {
-  if (v === undefined) return localStorage.getItem(k) || '';
-  localStorage.setItem(k, v);
-}
-function lsJ(k, def) {
-  try { return JSON.parse(localStorage.getItem(k)) || def; } catch(e) { return def; }
-}
-function lsJset(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
+function ls(k,v){ if(v===undefined) return localStorage.getItem(k)||''; localStorage.setItem(k,v); }
+function lsJ(k,def){ try{return JSON.parse(localStorage.getItem(k))||def;}catch(e){return def;} }
+function lsJset(k,v){ localStorage.setItem(k,JSON.stringify(v)); }
+function getEstados(){ return lsJ('estados',Array(7).fill('pendiente')); }
+function setEstados(e){ lsJset('estados',e); }
+function getJefes(){ return lsJ('jefes',{}); }
+function setJefes(j){ lsJset('jefes',j); }
+function getFotos(){ return lsJ('fotos',[]); }
+function setFotos(f){ lsJset('fotos',f); }
+function getAudios(){ return lsJ('audios',[]); }
+function setAudios(a){ lsJset('audios',a); }
 
-function getEstados() { return lsJ('estados', Array(7).fill('pendiente')); }
-function setEstados(e) { lsJset('estados', e); }
-function getJefes() { return lsJ('jefes', {}); }
-function setJefes(j) { lsJset('jefes', j); }
-function getFotos() { return lsJ('fotos', []); }
-function setFotos(f) { lsJset('fotos', f); }
-function getAudios() { return lsJ('audios', []); }
-function setAudios(a) { lsJset('audios', a); }
+// ============================================================
+// FIRESTORE — guardar datos de texto
+// ============================================================
+function guardarEnFirestore(idx) {
+  setSaveStatus('g');
+  var s = SD[idx];
+  var obs = lsJ('obs_'+idx,{});
+  var obN = lsJ('obsn_'+idx,{});
+  var pj = lsJ('p_j_'+idx,{});
+  var pa = lsJ('p_a_'+idx,{});
+  var jefes = getJefes();
+  var estados = getEstados();
+  var doc = {
+    servicio: s.c,
+    nombre: s.n,
+    estado: estados[idx]||'pendiente',
+    jefe_presente: jefes[idx]||s.jd,
+    m2: ls('m2_'+idx),
+    notas: ls('notas_'+idx),
+    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+    obs: obs,
+    obs_notas: obN,
+    entrevista_jefe: pj,
+    entrevista_asistencial: pa,
+    fotos_count: getFotos().filter(function(f){return f.idx===idx;}).length,
+    audios_count: getAudios().filter(function(a){return a.idx===idx;}).length
+  };
+  db.collection('visitas').doc(VISITA_ID)
+    .collection('servicios').doc(s.c)
+    .set(doc)
+    .then(function(){ setSaveStatus('ok'); toast('Guardado en Firestore ✓'); })
+    .catch(function(e){ console.error(e); setSaveStatus('err'); toast('Error al guardar'); });
+}
+
+function guardarHallazgos() {
+  ls('hallazgos', document.getElementById('h-txt').value);
+  ls('pendientes', document.getElementById('p-txt').value);
+  db.collection('visitas').doc(VISITA_ID).set({
+    hallazgos: ls('hallazgos'),
+    pendientes: ls('pendientes'),
+    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+  }, {merge:true}).catch(function(e){ console.error(e); });
+}
+
+// ============================================================
+// FIREBASE STORAGE — subir archivos
+// ============================================================
+function subirStorage(dataUrl, path, contentType, label) {
+  var base64 = dataUrl.includes(',') ? dataUrl.split(',')[1] : dataUrl;
+  var byteChars = atob(base64);
+  var bytes = new Uint8Array(byteChars.length);
+  for(var i=0;i<byteChars.length;i++) bytes[i]=byteChars.charCodeAt(i);
+  var blob = new Blob([bytes],{type:contentType});
+  storage.ref(path).put(blob)
+    .then(function(){ toast(label+' guardado en Firebase ✓'); })
+    .catch(function(e){ console.error(e); toast('Error subiendo '+label); });
+}
 
 // ============================================================
 // NAVEGACIÓN
 // ============================================================
 function mostrar(id) {
-  document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
   document.getElementById('sc-'+id).classList.add('active');
-  document.querySelectorAll('.nav-btn').forEach(function(b){ b.classList.remove('active'); });
-  if (id === 'galeria') renderGaleria();
+  document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active');});
+  if(id==='galeria') renderGaleria();
 }
 
 function abrirSrv(idx) {
-  sIdx = idx;
-  var s = SD[idx];
-  var jefes = getJefes();
-  document.getElementById('f-titulo').textContent = s.n;
-  document.getElementById('f-sub').textContent = jefes[idx] || s.jd;
+  sIdx=idx;
+  var s=SD[idx]; var jefes=getJefes();
+  document.getElementById('f-titulo').textContent=s.n;
+  document.getElementById('f-sub').textContent=jefes[idx]||s.jd;
   actuBadgeFicha(idx);
   renderFicha(idx);
-  var estados = getEstados();
-  if (estados[idx] === 'pendiente') {
-    estados[idx] = 'curso';
-    setEstados(estados);
-    actuBadge(idx);
-  }
+  var estados=getEstados();
+  if(estados[idx]==='pendiente'){estados[idx]='curso';setEstados(estados);actuBadge(idx);}
   mostrar('ficha');
 }
 
-function volverHome() {
-  mostrar('home');
-  actuProgreso();
-}
+function volverHome(){ mostrar('home'); actuProgreso(); }
 
 // ============================================================
 // RENDER FICHA
 // ============================================================
 function renderFicha(idx) {
-  document.getElementById('f-body').innerHTML =
-    rOrg(idx) + rObs(idx) + rEnt(idx) + rNotas(idx) + rFotos(idx);
-  var nl = document.getElementById('nl-'+idx);
-  if (nl) nl.oninput = function(){ ls('notas_'+idx, this.value); autoguardar(); };
+  document.getElementById('f-body').innerHTML=rOrg(idx)+rObs(idx)+rEnt(idx)+rNotas(idx)+rFotos(idx);
+  var nl=document.getElementById('nl-'+idx);
+  if(nl) nl.oninput=function(){ls('notas_'+idx,this.value);autoguardar();};
 }
 
 function rOrg(idx) {
-  var s = SD[idx];
-  var jefes = getJefes();
-  var jActual = jefes[idx] || s.jd;
-  var ps = s.org.map(function(p){
-    return '<div class="org-p"><div class="org-av">'+p.i+'</div><div><div class="org-n">'+p.n+'</div><div class="org-r">'+p.r+'</div></div></div>';
-  }).join('');
-  return '<div class="sec collapsed" id="s-org">'+
-    '<div class="sec-h" onclick="tog(\'s-org\')"><div class="sec-t"><i class="ti ti-users" style="font-size:17px"></i> Organigrama</div><i class="ti ti-chevron-down chev"></i></div>'+
-    '<div class="sec-body">'+
-    '<div class="jefe-edit"><label><i class="ti ti-edit" style="font-size:13px;vertical-align:-2px"></i> Quién recibe:</label>'+
-    '<input type="text" value="'+jActual+'" placeholder="Nombre del responsable presente" oninput="actuJefe('+idx+',this.value)"></div>'+
-    ps+'<div class="org-warn"><i class="ti ti-alert-triangle" style="font-size:12px;vertical-align:-2px"></i> Organigrama vigencia 03/2020 — confirmar en terreno.</div>'+
-    '</div></div>';
+  var s=SD[idx]; var jefes=getJefes(); var j=jefes[idx]||s.jd;
+  var ps=s.org.map(function(p){return '<div class="org-p"><div class="org-av">'+p.i+'</div><div><div class="org-n">'+p.n+'</div><div class="org-r">'+p.r+'</div></div></div>';}).join('');
+  return '<div class="sec collapsed" id="s-org"><div class="sec-h" onclick="tog(\'s-org\')"><div class="sec-t"><i class="ti ti-users" style="font-size:17px"></i> Organigrama</div><i class="ti ti-chevron-down chev"></i></div>'+
+    '<div class="sec-body"><div class="jefe-edit"><label><i class="ti ti-edit" style="font-size:13px;vertical-align:-2px"></i> Quién recibe:</label>'+
+    '<input type="text" value="'+j+'" placeholder="Nombre del responsable presente" oninput="actuJefe('+idx+',this.value)"></div>'+
+    ps+'<div class="org-warn"><i class="ti ti-alert-triangle" style="font-size:12px;vertical-align:-2px"></i> Organigrama vigencia 03/2020 — confirmar en terreno.</div></div></div>';
 }
 
 function rObs(idx) {
-  var obs = lsJ('obs_'+idx, {});
-  var obN = lsJ('obsn_'+idx, {});
-  var m2 = ls('m2_'+idx);
-  var items = CLI.map(function(item){
-    var v = obs[item.k]||''; var nt = obN[item.k]||'';
-    var btns = ['C','CP','NC','NA','NV'].map(function(b){
-      return '<button class="brm'+(v===b?' s'+b:'')+'" onclick="setBRM('+idx+',\''+item.k+'\',\''+b+'\',this)">'+b+'</button>';
-    }).join('');
+  var obs=lsJ('obs_'+idx,{}); var obN=lsJ('obsn_'+idx,{}); var m2=ls('m2_'+idx);
+  var items=CLI.map(function(item){
+    var v=obs[item.k]||''; var nt=obN[item.k]||'';
+    var btns=['C','CP','NC','NA','NV'].map(function(b){return '<button class="brm'+(v===b?' s'+b:'')+'" onclick="setBRM('+idx+',\''+item.k+'\',\''+b+'\',this)">'+b+'</button>';}).join('');
     return '<div class="cli-item"><div class="cli-label">'+item.l+'</div><div class="brm-g">'+btns+'</div>'+
       '<textarea class="obs-n" placeholder="Observación..." oninput="setObsN('+idx+',\''+item.k+'\',this.value)">'+nt+'</textarea></div>';
   }).join('');
-  return '<div class="sec collapsed" id="s-obs">'+
-    '<div class="sec-h" onclick="tog(\'s-obs\')"><div class="sec-t"><i class="ti ti-checklist" style="font-size:17px"></i> Observación directa</div><i class="ti ti-chevron-down chev"></i></div>'+
-    '<div class="sec-body">'+
-    '<div class="m2r"><label>Metros cuadrados estimados</label><input type="number" value="'+m2+'" placeholder="m²" oninput="ls(\'m2_'+idx+'\',this.value);autoguardar()"></div>'+
+  return '<div class="sec collapsed" id="s-obs"><div class="sec-h" onclick="tog(\'s-obs\')"><div class="sec-t"><i class="ti ti-checklist" style="font-size:17px"></i> Observación directa</div><i class="ti ti-chevron-down chev"></i></div>'+
+    '<div class="sec-body"><div class="m2r"><label>Metros cuadrados estimados</label><input type="number" value="'+m2+'" placeholder="m²" oninput="ls(\'m2_'+idx+'\',this.value);autoguardar()"></div>'+
     '<div class="leyenda"><b>C</b> = Cumple &nbsp;·&nbsp; <b>CP</b> = Cumple parcialmente &nbsp;·&nbsp; <b>NC</b> = No cumple &nbsp;·&nbsp; <b>NA</b> = No aplica &nbsp;·&nbsp; <b>NV</b> = No verificado</div>'+
     items+'</div></div>';
 }
 
 function rEnt(idx) {
-  return '<div class="sec collapsed" id="s-ent">'+
-    '<div class="sec-h" onclick="tog(\'s-ent\')"><div class="sec-t"><i class="ti ti-microphone" style="font-size:17px"></i> Entrevistas</div><i class="ti ti-chevron-down chev"></i></div>'+
-    '<div class="sec-body" style="padding:0">'+
-    '<div class="tab-row"><button class="tab-btn active" id="tb-j" onclick="swTab(\'j\')">Jefe / responsable</button><button class="tab-btn" id="tb-a" onclick="swTab(\'a\')">Asistencial</button></div>'+
+  return '<div class="sec collapsed" id="s-ent"><div class="sec-h" onclick="tog(\'s-ent\')"><div class="sec-t"><i class="ti ti-microphone" style="font-size:17px"></i> Entrevistas</div><i class="ti ti-chevron-down chev"></i></div>'+
+    '<div class="sec-body" style="padding:0"><div class="tab-row"><button class="tab-btn active" id="tb-j" onclick="swTab(\'j\')">Jefe / responsable</button><button class="tab-btn" id="tb-a" onclick="swTab(\'a\')">Asistencial</button></div>'+
     '<div class="tab-c active" id="tc-j">'+rTab('j',idx)+'</div>'+
-    '<div class="tab-c" id="tc-a">'+rTab('a',idx)+'</div>'+
-    '</div></div>';
+    '<div class="tab-c" id="tc-a">'+rTab('a',idx)+'</div></div></div>';
 }
 
-function rTab(tipo, idx) {
-  var preg = tipo==='j' ? PJ : PA;
-  var saved = lsJ('p_'+tipo+'_'+idx, {});
-  var tipoNombre = tipo==='j' ? 'jefe' : 'asistencial';
-  var audGuardados = getAudios().filter(function(a){ return a.idx===idx && a.tipo===tipoNombre; });
-  var audHtml = audGuardados.map(function(a){
-    return '<div class="audio-item"><i class="ti ti-file-music" style="font-size:17px;color:#666"></i><span>'+a.clave+' · '+a.hora+'</span>'+
-      '<audio controls src="'+a.dataUrl+'" style="height:30px;flex-shrink:0"></audio></div>';
-  }).join('');
-  var bqs = preg.map(function(bl,bi){
+function rTab(tipo,idx) {
+  var preg=tipo==='j'?PJ:PA; var saved=lsJ('p_'+tipo+'_'+idx,{});
+  var tNombre=tipo==='j'?'jefe':'asistencial';
+  var auds=getAudios().filter(function(a){return a.idx===idx&&a.tipo===tNombre;});
+  var audHtml=auds.map(function(a){return '<div class="audio-item"><i class="ti ti-file-music" style="font-size:17px;color:#666"></i><span>'+a.clave+' · '+a.hora+'</span><audio controls src="'+a.dataUrl+'" style="height:30px;flex-shrink:0"></audio></div>';}).join('');
+  var bqs=preg.map(function(bl,bi){
     return '<div class="bl-ent">'+bl.b+'</div>'+bl.p.map(function(p,pi){
-      var k = bi+'_'+pi;
-      return '<div class="preg-item"><div class="preg-txt">'+p+'</div>'+
-        '<textarea oninput="guardarP(\''+tipo+'\','+idx+',\''+k+'\',this.value)" placeholder="Respuesta...">'+( saved[k]||'')+'</textarea></div>';
+      var k=bi+'_'+pi;
+      return '<div class="preg-item"><div class="preg-txt">'+p+'</div><textarea oninput="guardarP(\''+tipo+'\','+idx+',\''+k+'\',this.value)" placeholder="Respuesta...">'+( saved[k]||'')+'</textarea></div>';
     }).join('');
   }).join('');
   return '<div id="av-'+tipo+'" class="aviso"></div>'+
-    '<button class="grab-btn" id="gb-'+tipo+'" onclick="toggleGrab(\''+tipo+'\')"><i class="ti ti-microphone" style="font-size:20px"></i> Grabar entrevista '+tipoNombre+'</button>'+
+    '<button class="grab-btn" id="gb-'+tipo+'" onclick="toggleGrab(\''+tipo+'\')"><i class="ti ti-microphone" style="font-size:20px"></i> Grabar entrevista '+tNombre+'</button>'+
     '<div class="grab-timer" id="gt-'+tipo+'" style="display:none">00:00</div>'+
     '<div id="ad-'+tipo+'">'+audHtml+'</div>'+bqs;
 }
 
 function rNotas(idx) {
-  return '<div class="sec collapsed" id="s-notas">'+
-    '<div class="sec-h" onclick="tog(\'s-notas\')"><div class="sec-t"><i class="ti ti-notes" style="font-size:17px"></i> Notas libres</div><i class="ti ti-chevron-down chev"></i></div>'+
+  return '<div class="sec collapsed" id="s-notas"><div class="sec-h" onclick="tog(\'s-notas\')"><div class="sec-t"><i class="ti ti-notes" style="font-size:17px"></i> Notas libres</div><i class="ti ti-chevron-down chev"></i></div>'+
     '<div class="sec-body"><textarea class="notas-area" id="nl-'+idx+'" placeholder="Observaciones, hallazgos, tensiones detectadas...">'+ls('notas_'+idx)+'</textarea></div></div>';
 }
 
 function rFotos(idx) {
-  var mias = getFotos().filter(function(f){ return f.idx===idx; });
-  var thumbs = mias.map(function(f){
-    return '<div class="foto-th"><img src="'+f.src+'"><div class="foto-lbl">'+f.hora+'</div></div>';
-  }).join('');
-  return '<div class="sec collapsed" id="s-fotos">'+
-    '<div class="sec-h" onclick="tog(\'s-fotos\')"><div class="sec-t"><i class="ti ti-camera" style="font-size:17px"></i> Fotos'+(mias.length>0?' ('+mias.length+')':'')+'</div><i class="ti ti-chevron-down chev"></i></div>'+
-    '<div class="sec-body">'+
-    '<div id="av-cam" class="aviso"></div>'+
+  var mias=getFotos().filter(function(f){return f.idx===idx;});
+  var thumbs=mias.map(function(f){return '<div class="foto-th"><img src="'+f.src+'"><div class="foto-lbl">'+f.hora+'</div></div>';}).join('');
+  return '<div class="sec collapsed" id="s-fotos"><div class="sec-h" onclick="tog(\'s-fotos\')"><div class="sec-t"><i class="ti ti-camera" style="font-size:17px"></i> Fotos'+(mias.length>0?' ('+mias.length+')':'')+'</div><i class="ti ti-chevron-down chev"></i></div>'+
+    '<div class="sec-body"><div id="av-cam" class="aviso"></div>'+
     '<input type="file" id="fi-cam" accept="image/*" capture="environment" style="display:none" onchange="procesarFoto(event)">'+
     '<input type="file" id="fi-gal" accept="image/*" style="display:none" onchange="procesarFoto(event)">'+
-    '<div class="foto-ops">'+
-    '<button class="foto-op" onclick="pedirCamara()"><i class="ti ti-camera" style="font-size:24px;color:#185FA5"></i>Cámara</button>'+
-    '<button class="foto-op" onclick="document.getElementById(\'fi-gal\').click()"><i class="ti ti-photo" style="font-size:24px;color:#534AB7"></i>Galería</button>'+
-    '</div>'+
-    '<div class="foto-grid" id="fg-'+idx+'">'+thumbs+'</div>'+
-    '</div></div>';
+    '<div class="foto-ops"><button class="foto-op" onclick="pedirCamara()"><i class="ti ti-camera" style="font-size:24px;color:#185FA5"></i>Cámara</button>'+
+    '<button class="foto-op" onclick="document.getElementById(\'fi-gal\').click()"><i class="ti ti-photo" style="font-size:24px;color:#534AB7"></i>Galería</button></div>'+
+    '<div class="foto-grid" id="fg-'+idx+'">'+thumbs+'</div></div></div>';
 }
 
 // ============================================================
 // INTERACCIONES
 // ============================================================
-function tog(id) {
-  var s = document.getElementById(id);
-  s.classList.toggle('collapsed');
-  s.classList.toggle('open');
+function tog(id){var s=document.getElementById(id);s.classList.toggle('collapsed');s.classList.toggle('open');}
+
+function setBRM(idx,k,val,btn){
+  var obs=lsJ('obs_'+idx,{});
+  if(obs[k]===val){delete obs[k];btn.parentElement.querySelectorAll('.brm').forEach(function(b){b.className='brm';});}
+  else{obs[k]=val;btn.parentElement.querySelectorAll('.brm').forEach(function(b){b.className='brm';});btn.className='brm s'+val;}
+  lsJset('obs_'+idx,obs);autoguardar();
 }
 
-function setBRM(idx, k, val, btn) {
-  var obs = lsJ('obs_'+idx, {});
-  if (obs[k] === val) { delete obs[k]; btn.parentElement.querySelectorAll('.brm').forEach(function(b){ b.className='brm'; }); }
-  else { obs[k] = val; btn.parentElement.querySelectorAll('.brm').forEach(function(b){ b.className='brm'; }); btn.className='brm s'+val; }
-  lsJset('obs_'+idx, obs); autoguardar();
-}
+function setObsN(idx,k,val){var o=lsJ('obsn_'+idx,{});o[k]=val;lsJset('obsn_'+idx,o);autoguardar();}
+function guardarP(tipo,idx,k,val){var o=lsJ('p_'+tipo+'_'+idx,{});o[k]=val;lsJset('p_'+tipo+'_'+idx,o);autoguardar();}
 
-function setObsN(idx, k, val) {
-  var o = lsJ('obsn_'+idx, {}); o[k] = val; lsJset('obsn_'+idx, o); autoguardar();
-}
-
-function guardarP(tipo, idx, k, val) {
-  var o = lsJ('p_'+tipo+'_'+idx, {}); o[k] = val; lsJset('p_'+tipo+'_'+idx, o); autoguardar();
-}
-
-function actuJefe(idx, val) {
-  var j = getJefes(); j[idx] = val; setJefes(j);
-  var l = document.getElementById('jlbl-'+idx);
-  if (l) l.textContent = val;
-  document.getElementById('f-sub').textContent = val;
+function actuJefe(idx,val){
+  var j=getJefes();j[idx]=val;setJefes(j);
+  var l=document.getElementById('jlbl-'+idx);if(l)l.textContent=val;
+  document.getElementById('f-sub').textContent=val;
   autoguardar();
 }
 
-function swTab(t) {
-  ['j','a'].forEach(function(tab){
-    document.getElementById('tb-'+tab).classList.toggle('active', tab===t);
-    document.getElementById('tc-'+tab).classList.toggle('active', tab===t);
-  });
+function swTab(t){['j','a'].forEach(function(tab){document.getElementById('tb-'+tab).classList.toggle('active',tab===t);document.getElementById('tc-'+tab).classList.toggle('active',tab===t);});}
+
+function marcarRel(){
+  var estados=getEstados();estados[sIdx]='relevado';setEstados(estados);
+  actuBadge(sIdx);actuBadgeFicha(sIdx);actuProgreso();
+  guardarEnFirestore(sIdx);
 }
 
-function marcarRel() {
-  var estados = getEstados();
-  estados[sIdx] = 'relevado';
-  setEstados(estados);
-  actuBadge(sIdx);
-  actuBadgeFicha(sIdx);
-  actuProgreso();
-  guardarEnSheet(sIdx);
-  toast('Servicio relevado ✓');
-}
-
-function guardarManual() { guardarEnSheet(sIdx); toast('Guardado en Sheet'); }
+function guardarManual(){guardarEnFirestore(sIdx);}
 
 // ============================================================
 // MICRÓFONO
 // ============================================================
-function toggleGrab(tipo) {
-  var btn = document.getElementById('gb-'+tipo);
-  var timer = document.getElementById('gt-'+tipo);
-  var av = document.getElementById('av-'+tipo);
-  var key = 'g_'+tipo;
-  if (mrecs[key] && mrecs[key].state==='recording') {
-    mrecs[key].stop();
-    clearInterval(gtimers[key]);
+function toggleGrab(tipo){
+  var btn=document.getElementById('gb-'+tipo);
+  var timer=document.getElementById('gt-'+tipo);
+  var av=document.getElementById('av-'+tipo);
+  var key='g_'+tipo;
+  if(mrecs[key]&&mrecs[key].state==='recording'){
+    mrecs[key].stop();clearInterval(gtimers[key]);
     btn.classList.remove('rec');
-    btn.innerHTML = '<i class="ti ti-microphone" style="font-size:20px"></i> Grabar entrevista '+(tipo==='j'?'jefe':'asistencial');
-    timer.style.display = 'none';
-    gseg[tipo] = 0;
-    if (av) { av.className='aviso'; av.style.display='none'; }
+    btn.innerHTML='<i class="ti ti-microphone" style="font-size:20px"></i> Grabar entrevista '+(tipo==='j'?'jefe':'asistencial');
+    timer.style.display='none';gseg[tipo]=0;
+    if(av){av.className='aviso';av.style.display='none';}
   } else {
     navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
-      if (av) { av.style.display='none'; }
-      var mr = new MediaRecorder(stream);
-      var chunks = [];
-      mr.ondataavailable = function(e){ chunks.push(e.data); };
-      mr.onstop = function(){
-        var blob = new Blob(chunks, {type:'audio/webm'});
-        var reader = new FileReader();
-        reader.onload = function(ev){
-          var dataUrl = ev.target.result;
-          var ahora = new Date();
-          var hora = ahora.getHours()+':'+String(ahora.getMinutes()).padStart(2,'0');
-          var tipoNombre = tipo==='j' ? 'jefe' : 'asistencial';
-          var s = SD[sIdx];
-          var audioObj = {idx:sIdx, dataUrl:dataUrl, hora:hora, servicio:s.n, clave:s.c, tipo:tipoNombre};
-          var audios = getAudios();
-          audios.push(audioObj);
-          setAudios(audios);
-          var cont = document.getElementById('ad-'+tipo);
-          if (cont) {
-            var d = document.createElement('div');
-            d.className = 'audio-item';
-            d.innerHTML = '<i class="ti ti-file-music" style="font-size:17px;color:#666"></i><span>'+s.c+' · '+hora+'</span><audio controls src="'+dataUrl+'" style="height:30px;flex-shrink:0"></audio>';
-            cont.appendChild(d);
-          }
-          subirFirebase(dataUrl, 'Audios/'+s.c+'_'+tipoNombre+'/'+s.c+'_'+tipoNombre+'_'+ts()+'.webm', 'audio/webm', 'Audio');
+      if(av){av.style.display='none';}
+      var mr=new MediaRecorder(stream);var chunks=[];
+      mr.ondataavailable=function(e){chunks.push(e.data);};
+      mr.onstop=function(){
+        var blob=new Blob(chunks,{type:'audio/webm'});
+        var reader=new FileReader();
+        reader.onload=function(ev){
+          var dataUrl=ev.target.result;
+          var ahora=new Date();
+          var hora=ahora.getHours()+':'+String(ahora.getMinutes()).padStart(2,'0');
+          var tNombre=tipo==='j'?'jefe':'asistencial';
+          var s=SD[sIdx];
+          var audioObj={idx:sIdx,dataUrl:dataUrl,hora:hora,servicio:s.n,clave:s.c,tipo:tNombre};
+          var audios=getAudios();audios.push(audioObj);setAudios(audios);
+          var cont=document.getElementById('ad-'+tipo);
+          if(cont){var d=document.createElement('div');d.className='audio-item';d.innerHTML='<i class="ti ti-file-music" style="font-size:17px;color:#666"></i><span>'+s.c+' · '+hora+'</span><audio controls src="'+dataUrl+'" style="height:30px;flex-shrink:0"></audio>';cont.appendChild(d);}
+          subirStorage(dataUrl,'Audios/'+s.c+'_'+tNombre+'/'+s.c+'_'+tNombre+'_'+mkts()+'.webm','audio/webm','Audio');
+          guardarEnFirestore(sIdx);
         };
         reader.readAsDataURL(blob);
-        stream.getTracks().forEach(function(t){ t.stop(); });
+        stream.getTracks().forEach(function(t){t.stop();});
       };
-      mr.start();
-      mrecs[key] = mr;
-      btn.classList.add('rec');
-      btn.innerHTML = '<i class="ti ti-player-stop" style="font-size:20px"></i> Detener grabación';
-      timer.style.display = 'block';
-      gseg[tipo] = 0;
-      gtimers[key] = setInterval(function(){
-        gseg[tipo]++;
-        var m = Math.floor(gseg[tipo]/60); var s = gseg[tipo]%60;
-        timer.textContent = String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
-      }, 1000);
+      mr.start();mrecs[key]=mr;
+      btn.classList.add('rec');btn.innerHTML='<i class="ti ti-player-stop" style="font-size:20px"></i> Detener grabación';
+      timer.style.display='block';gseg[tipo]=0;
+      gtimers[key]=setInterval(function(){gseg[tipo]++;var m=Math.floor(gseg[tipo]/60);var s=gseg[tipo]%60;timer.textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');},1000);
     }).catch(function(){
-      if (av) {
-        av.className = 'aviso err';
-        av.innerHTML = '<strong><i class="ti ti-microphone-off" style="font-size:13px;vertical-align:-2px"></i> Micrófono bloqueado</strong>Tocá el ícono de candado/configuración en la barra de direcciones → Permisos del sitio → Micrófono → Permitir. Luego recargá la página.';
-        av.style.display = 'block';
-      }
-      btn.innerHTML = '<i class="ti ti-microphone-off" style="font-size:20px"></i> Micrófono bloqueado — ver arriba';
+      if(av){av.className='aviso err';av.innerHTML='<strong><i class="ti ti-microphone-off" style="font-size:13px;vertical-align:-2px"></i> Micrófono bloqueado</strong>Ícono de candado en la barra → Permisos del sitio → Micrófono → Permitir. Luego recargá la página.';av.style.display='block';}
+      btn.innerHTML='<i class="ti ti-microphone-off" style="font-size:20px"></i> Micrófono bloqueado — ver arriba';
     });
   }
 }
@@ -566,214 +537,128 @@ function toggleGrab(tipo) {
 // ============================================================
 // FOTOS
 // ============================================================
-function pedirCamara() {
-  var av = document.getElementById('av-cam');
+function pedirCamara(){
+  var av=document.getElementById('av-cam');
   navigator.mediaDevices.getUserMedia({video:true}).then(function(stream){
-    stream.getTracks().forEach(function(t){ t.stop(); });
-    if (av) { av.style.display='none'; }
+    stream.getTracks().forEach(function(t){t.stop();});
+    if(av){av.style.display='none';}
     document.getElementById('fi-cam').click();
   }).catch(function(){
-    if (av) {
-      av.className = 'aviso err';
-      av.innerHTML = '<strong><i class="ti ti-camera-off" style="font-size:13px;vertical-align:-2px"></i> Cámara bloqueada</strong>Podés usar "Galería". Para habilitar cámara: ícono de candado → Permisos → Cámara → Permitir.';
-      av.style.display = 'block';
-    }
+    if(av){av.className='aviso err';av.innerHTML='<strong><i class="ti ti-camera-off" style="font-size:13px;vertical-align:-2px"></i> Cámara bloqueada</strong>Podés usar "Galería". Para habilitar: ícono de candado → Permisos → Cámara → Permitir.';av.style.display='block';}
     document.getElementById('fi-gal').click();
   });
 }
 
-function procesarFoto(e) {
-  var file = e.target.files[0]; if (!file) return;
-  var reader = new FileReader();
-  reader.onload = function(ev){
-    var ahora = new Date();
-    var hora = ahora.getHours()+':'+String(ahora.getMinutes()).padStart(2,'0');
-    var s = SD[sIdx];
-    var foto = {idx:sIdx, src:ev.target.result, hora:hora, servicio:s.n, clave:s.c};
-    var fotos = getFotos(); fotos.push(foto); setFotos(fotos);
-    var grid = document.getElementById('fg-'+sIdx);
-    if (grid) {
-      var th = document.createElement('div'); th.className='foto-th';
-      th.innerHTML = '<img src="'+ev.target.result+'"><div class="foto-lbl">'+hora+'</div>';
-      grid.appendChild(th);
-    }
-    subirFirebase(ev.target.result, 'Fotos/'+s.c+'/'+s.c+'_'+ts()+'.jpg', 'image/jpeg', 'Foto');
-    autoguardar(); toast('Foto agregada');
+function procesarFoto(e){
+  var file=e.target.files[0];if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(ev){
+    var ahora=new Date();var hora=ahora.getHours()+':'+String(ahora.getMinutes()).padStart(2,'0');
+    var s=SD[sIdx];
+    var foto={idx:sIdx,src:ev.target.result,hora:hora,servicio:s.n,clave:s.c};
+    var fotos=getFotos();fotos.push(foto);setFotos(fotos);
+    var grid=document.getElementById('fg-'+sIdx);
+    if(grid){var th=document.createElement('div');th.className='foto-th';th.innerHTML='<img src="'+ev.target.result+'"><div class="foto-lbl">'+hora+'</div>';grid.appendChild(th);}
+    subirStorage(ev.target.result,'Fotos/'+s.c+'/'+s.c+'_'+mkts()+'.jpg','image/jpeg','Foto');
+    guardarEnFirestore(sIdx);toast('Foto agregada');
   };
-  reader.readAsDataURL(file); e.target.value='';
-}
-
-// ============================================================
-// FIREBASE STORAGE
-// ============================================================
-function subirFirebase(dataUrl, path, contentType, label) {
-  var base64 = dataUrl.includes(',') ? dataUrl.split(',')[1] : dataUrl;
-  var byteChars = atob(base64);
-  var byteArr = new Uint8Array(byteChars.length);
-  for (var i=0; i<byteChars.length; i++) byteArr[i] = byteChars.charCodeAt(i);
-  var blob = new Blob([byteArr], {type:contentType});
-  storage.ref(path).put(blob)
-    .then(function(){ toast(label+' guardado en Firebase ✓'); })
-    .catch(function(err){ console.error('Firebase error:', err); toast('Error subiendo '+label+' — guardado localmente'); });
-}
-
-// ============================================================
-// APPS SCRIPT — guardar datos de texto en Sheet
-// ============================================================
-function guardarEnSheet(idx) {
-  setSaveStatus('g');
-  var s = SD[idx];
-  var obs = lsJ('obs_'+idx, {});
-  var obN = lsJ('obsn_'+idx, {});
-  var pj = lsJ('p_j_'+idx, {});
-  var pa = lsJ('p_a_'+idx, {});
-  var jefes = getJefes();
-  var fotos = getFotos().filter(function(f){ return f.idx===idx; }).length;
-  var audios = getAudios().filter(function(a){ return a.idx===idx; }).length;
-  var params = {
-    action:'guardarServicio', servicio:s.c,
-    estado:getEstados()[idx]||'', m2:ls('m2_'+idx), jefe_presente:jefes[idx]||s.jd,
-    obs_acc:obs.acc||'', obs_acc_n:obN.acc||'',
-    obs_inf:obs.inf||'', obs_inf_n:obN.inf||'',
-    obs_eqd:obs.eqd||'', obs_eqd_n:obN.eqd||'',
-    obs_eqf:obs.eqf||'', obs_eqf_n:obN.eqf||'',
-    obs_hig:obs.hig||'', obs_hig_n:obN.hig||'',
-    obs_par:obs.par||'', obs_par_n:obN.par||'',
-    obs_ins:obs.ins||'', obs_ins_n:obN.ins||'',
-    obs_ilu:obs.ilu||'', obs_ilu_n:obN.ilu||'',
-    obs_thi:obs.thi||'', obs_thi_n:obN.thi||'',
-    obs_dat:obs.dat||'', obs_dat_n:obN.dat||'',
-    pj00:pj['0_0']||'', pj01:pj['0_1']||'', pj02:pj['0_2']||'', pj03:pj['0_3']||'', pj04:pj['0_4']||'',
-    pj10:pj['1_0']||'', pj11:pj['1_1']||'', pj12:pj['1_2']||'', pj13:pj['1_3']||'',
-    pj20:pj['2_0']||'', pj21:pj['2_1']||'', pj22:pj['2_2']||'', pj23:pj['2_3']||'',
-    pj30:pj['3_0']||'', pj31:pj['3_1']||'', pj32:pj['3_2']||'', pj33:pj['3_3']||'',
-    pa00:pa['0_0']||'', pa01:pa['0_1']||'', pa02:pa['0_2']||'', pa03:pa['0_3']||'',
-    pa10:pa['1_0']||'', pa11:pa['1_1']||'', pa12:pa['1_2']||'',
-    pa20:pa['2_0']||'', pa21:pa['2_1']||'', pa22:pa['2_2']||'',
-    notas:ls('notas_'+idx), fotos_count:fotos, audios_count:audios
-  };
-  var qs = Object.keys(params).map(function(k){
-    return encodeURIComponent(k)+'='+encodeURIComponent(params[k]);
-  }).join('&');
-  fetch(SCRIPT_URL+'?'+qs, {method:'GET', mode:'no-cors'})
-    .then(function(){ setSaveStatus('ok'); })
-    .catch(function(e){ console.error(e); setSaveStatus('err'); });
+  reader.readAsDataURL(file);e.target.value='';
 }
 
 // ============================================================
 // GALERÍA
 // ============================================================
-function renderGaleria() {
-  var grid = document.getElementById('gal-grid');
-  var fotos = getFotos();
-  if (fotos.length===0) { grid.innerHTML='<div class="empty">Sin fotos todavía.<br>Se agregan desde cada servicio.</div>'; return; }
-  grid.innerHTML = fotos.map(function(f){
-    return '<div class="gal-th"><img src="'+f.src+'" alt="'+f.servicio+'"><div class="gal-info"><div class="gal-srv">'+f.servicio+'</div><div class="gal-hora">'+f.hora+'</div></div></div>';
-  }).join('');
+function renderGaleria(){
+  var grid=document.getElementById('gal-grid');var fotos=getFotos();
+  if(fotos.length===0){grid.innerHTML='<div class="empty">Sin fotos todavía.<br>Se agregan desde cada servicio.</div>';return;}
+  grid.innerHTML=fotos.map(function(f){return '<div class="gal-th"><img src="'+f.src+'" alt="'+f.servicio+'"><div class="gal-info"><div class="gal-srv">'+f.servicio+'</div><div class="gal-hora">'+f.hora+'</div></div></div>';}).join('');
 }
 
 // ============================================================
 // BADGES Y PROGRESO
 // ============================================================
-function actuBadge(idx) {
-  var e = getEstados()[idx];
-  var b = document.getElementById('bdg-'+idx); if (!b) return;
-  b.className = 'badge';
-  if (e==='pendiente'){ b.classList.add('b-pend'); b.textContent='Pendiente'; }
-  else if (e==='curso'){ b.classList.add('b-curso'); b.textContent='En curso'; }
-  else { b.classList.add('b-rel'); b.textContent='Relevado ✓'; }
+function actuBadge(idx){
+  var e=getEstados()[idx];var b=document.getElementById('bdg-'+idx);if(!b)return;
+  b.className='badge';
+  if(e==='pendiente'){b.classList.add('b-pend');b.textContent='Pendiente';}
+  else if(e==='curso'){b.classList.add('b-curso');b.textContent='En curso';}
+  else{b.classList.add('b-rel');b.textContent='Relevado ✓';}
 }
 
-function actuBadgeFicha(idx) {
-  var e = getEstados()[idx];
-  var b = document.getElementById('f-badge'); b.className='badge';
-  if (e==='pendiente'){ b.classList.add('b-pend'); b.textContent='Pendiente'; }
-  else if (e==='curso'){ b.classList.add('b-curso'); b.textContent='En curso'; }
-  else { b.classList.add('b-rel'); b.textContent='Relevado ✓'; }
-  var br = document.getElementById('btn-rel');
-  if (e==='relevado'){ br.classList.add('ya'); br.innerHTML='<i class="ti ti-check" style="font-size:17px"></i> Relevado'; }
-  else { br.classList.remove('ya'); br.innerHTML='<i class="ti ti-check" style="font-size:17px"></i> Marcar relevado'; }
+function actuBadgeFicha(idx){
+  var e=getEstados()[idx];var b=document.getElementById('f-badge');b.className='badge';
+  if(e==='pendiente'){b.classList.add('b-pend');b.textContent='Pendiente';}
+  else if(e==='curso'){b.classList.add('b-curso');b.textContent='En curso';}
+  else{b.classList.add('b-rel');b.textContent='Relevado ✓';}
+  var br=document.getElementById('btn-rel');
+  if(e==='relevado'){br.classList.add('ya');br.innerHTML='<i class="ti ti-check" style="font-size:17px"></i> Relevado';}
+  else{br.classList.remove('ya');br.innerHTML='<i class="ti ti-check" style="font-size:17px"></i> Marcar relevado';}
 }
 
-function actuProgreso() {
-  var r = getEstados().filter(function(e){ return e==='relevado'; }).length;
-  document.getElementById('prog-fill').style.width = Math.round(r/7*100)+'%';
-  document.getElementById('prog-txt').textContent = r+' de 7 servicios relevados';
-  for (var i=0; i<7; i++) actuBadge(i);
+function actuProgreso(){
+  var r=getEstados().filter(function(e){return e==='relevado';}).length;
+  document.getElementById('prog-fill').style.width=Math.round(r/7*100)+'%';
+  document.getElementById('prog-txt').textContent=r+' de 7 servicios relevados';
+  for(var i=0;i<7;i++)actuBadge(i);
 }
 
 // ============================================================
 // AUTOGUARDADO
 // ============================================================
-function autoguardar() {
+function autoguardar(){
   setSaveStatus('g');
   clearTimeout(stout);
-  stout = setTimeout(function(){ guardarEnSheet(sIdx); }, 2500);
+  stout=setTimeout(function(){guardarEnFirestore(sIdx);},2500);
 }
 
-function setSaveStatus(st) {
-  var ind = document.getElementById('save-ind');
-  var txt = document.getElementById('save-txt');
-  if (!ind||!txt) return;
-  ind.className = 'save-ind ' + (st==='g'?'g':st==='ok'?'ok':st==='err'?'err':'');
-  if (st==='g') txt.textContent = 'Guardando...';
-  else if (st==='ok') txt.textContent = 'Guardado ✓';
-  else if (st==='err') txt.textContent = 'Error al guardar';
-  else txt.textContent = 'Listo';
+function setSaveStatus(st){
+  var ind=document.getElementById('save-ind');var txt=document.getElementById('save-txt');if(!ind||!txt)return;
+  ind.className='save-ind '+(st==='g'?'g':st==='ok'?'ok':st==='err'?'err':'');
+  if(st==='g')txt.textContent='Guardando...';
+  else if(st==='ok')txt.textContent='Guardado ✓';
+  else if(st==='err')txt.textContent='Error al guardar';
+  else txt.textContent='Listo';
 }
 
 // ============================================================
 // RESUMEN Y RESET
 // ============================================================
-function generarResumen() {
-  var r = 'RESUMEN DE CIERRE — VISITA 1\n\n';
-  var estados = getEstados(); var jefes = getJefes();
+function generarResumen(){
+  var r='RESUMEN DE CIERRE — VISITA 1\n\n';
+  var estados=getEstados();var jefes=getJefes();
   SD.forEach(function(s,idx){
-    r += '=== '+s.n.toUpperCase()+' ===\n';
-    r += 'Estado: '+estados[idx]+'\n';
-    r += 'Responsable presente: '+(jefes[idx]||s.jd)+'\n';
-    r += 'Notas: '+(ls('notas_'+idx)||'(sin notas)')+'\n\n';
+    r+='=== '+s.n.toUpperCase()+' ===\nEstado: '+estados[idx]+'\nResponsable: '+(jefes[idx]||s.jd)+'\nNotas: '+(ls('notas_'+idx)||'(sin notas)')+'\n\n';
   });
-  r += 'HALLAZGOS:\n'+(ls('hallazgos')||'')+'\n\nPENDIENTES:\n'+(ls('pendientes')||'');
-  var w = window.open('','_blank');
-  if (w) w.document.write('<pre style="font-family:monospace;padding:20px;font-size:14px;line-height:1.8;white-space:pre-wrap">'+r+'</pre>');
+  r+='HALLAZGOS:\n'+ls('hallazgos')+'\n\nPENDIENTES:\n'+ls('pendientes');
+  var w=window.open('','_blank');
+  if(w)w.document.write('<pre style="font-family:monospace;padding:20px;font-size:14px;line-height:1.8;white-space:pre-wrap">'+r+'</pre>');
 }
 
-function resetearVisita() {
-  if (!confirm('¿Seguro querés borrar todos los datos de esta visita? Esta acción no se puede deshacer.')) return;
-  localStorage.clear();
-  location.reload();
+function resetearVisita(){
+  if(!confirm('¿Seguro querés borrar todos los datos de esta visita? No se puede deshacer.'))return;
+  localStorage.clear();location.reload();
 }
 
 // ============================================================
 // UTILS
 // ============================================================
-function ts() {
-  var a = new Date();
-  return a.getFullYear()+''+String(a.getMonth()+1).padStart(2,'0')+''+String(a.getDate()).padStart(2,'0')+'_'+String(a.getHours()).padStart(2,'0')+''+String(a.getMinutes()).padStart(2,'0')+''+String(a.getSeconds()).padStart(2,'0');
-}
-
-function toast(msg) {
-  var t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  setTimeout(function(){ t.classList.remove('show'); }, 2500);
-}
+function mkts(){var a=new Date();return a.getFullYear()+''+String(a.getMonth()+1).padStart(2,'0')+''+String(a.getDate()).padStart(2,'0')+'_'+String(a.getHours()).padStart(2,'0')+''+String(a.getMinutes()).padStart(2,'0')+''+String(a.getSeconds()).padStart(2,'0');}
+function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2500);}
 
 // ============================================================
 // INIT
 // ============================================================
-function init() {
+function init(){
   actuProgreso();
-  var jefes = getJefes();
-  SD.forEach(function(s,idx){
-    var l = document.getElementById('jlbl-'+idx);
-    if (l && jefes[idx]) l.textContent = jefes[idx];
-  });
-  document.getElementById('h-txt').value = ls('hallazgos');
-  document.getElementById('p-txt').value = ls('pendientes');
+  var jefes=getJefes();
+  SD.forEach(function(s,idx){var l=document.getElementById('jlbl-'+idx);if(l&&jefes[idx])l.textContent=jefes[idx];});
+  document.getElementById('h-txt').value=ls('hallazgos');
+  document.getElementById('p-txt').value=ls('pendientes');
+  var ss=document.getElementById('sync-status');
+  if(ss)ss.textContent='Firebase ✓';
 }
 
-window.addEventListener('load', init);
+window.addEventListener('load',init);
 </script>
 </body>
 </html>
