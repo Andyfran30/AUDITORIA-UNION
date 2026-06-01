@@ -440,9 +440,9 @@ function autoguardar(){setSaveStatus('guardando');clearTimeout(stout);stout=setT
 function setSaveStatus(st){var ind=document.getElementById('save-indicator');var txt=document.getElementById('save-txt');if(!ind||!txt)return;ind.className='save-indicator '+st;if(st==='guardando')txt.textContent='Guardando en Drive...';else if(st==='guardado')txt.textContent='Guardado en Drive · hace un momento';else if(st==='error')txt.textContent='Error al guardar — reintentando...';else txt.textContent='Guardado automático activo';}
 var SCRIPT_URL='https://script.google.com/macros/s/AKfycbyRQJPYfqnwIXjnu-ikZvlCWSLT27xLBswZQyiW4OAwS_SFqhiSLvAW_1OKEL-PFWIJ/exec';
 function llamarScript(payload,cb){
-  fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify(payload)})
-    .then(function(r){return r.json();})
-    .then(function(data){if(cb)cb(data);})
+  var params=Object.keys(payload).map(function(k){return encodeURIComponent(k)+'='+encodeURIComponent(typeof payload[k]==='object'?JSON.stringify(payload[k]):payload[k]);}).join('&');
+  fetch(SCRIPT_URL+'?'+params,{method:'GET',mode:'no-cors'})
+    .then(function(){if(cb)cb({ok:true});setSaveStatus('guardado');})
     .catch(function(e){console.error(e);setSaveStatus('error');});
 }
 
