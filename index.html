@@ -436,13 +436,27 @@ function renderFicha(idx){
 }
 
 function rOrg(idx){
-  var s=SD[idx]; var cur=STATE[s.c]||{}; var j=cur.jefe_presente||s.jd;
-  var ps=s.org.map(function(p){return '<div class="org-row"><div class="org-av">'+p.i+'</div><div><div class="org-n">'+p.n+'</div><div class="org-r">'+p.r+'</div></div></div>';}).join('');
+  var s=SD[idx]; var cur=STATE[s.c]||{};
+  var j=cur.jefe_presente||s.jd;
+  var orgGuardado=cur.org||s.org;
+  var ps=orgGuardado.map(function(p,pi){
+    return '<div class="org-row">'+
+      '<div class="org-av" id="av-'+idx+'-'+pi+'">'+p.i+'</div>'+
+      '<div style="flex:1;min-width:0">'+
+        '<input type="text" value="'+p.n+'" placeholder="Nombre" '+
+          'style="width:100%;font-size:13px;font-weight:700;padding:4px 6px;border:1px solid #DDD;border-radius:6px;background:#fff;color:#111;font-family:inherit;margin-bottom:3px" '+
+          'oninput="actuOrg('+idx+','+pi+',\'n\',this.value)">'+
+        '<input type="text" value="'+p.r+'" placeholder="Rol" '+
+          'style="width:100%;font-size:11px;padding:3px 6px;border:1px solid #DDD;border-radius:6px;background:#fff;color:#888;font-family:inherit" '+
+          'oninput="actuOrg('+idx+','+pi+',\'r\',this.value)">'+
+      '</div>'+
+    '</div>';
+  }).join('');
   return '<div class="sec collapsed" id="s-org"><div class="sec-h" onclick="tog(\'s-org\')">'+
     '<div class="sec-t"><i class="ti ti-users"></i> Organigrama</div><i class="ti ti-chevron-down chev"></i></div>'+
     '<div class="sec-body"><div class="jefe-box"><label><i class="ti ti-edit" style="font-size:12px;vertical-align:-1px"></i> Quién recibe:</label>'+
     '<input type="text" value="'+j+'" placeholder="Nombre del responsable presente" oninput="actuJefe('+idx+',this.value)"></div>'+
-    ps+'<div class="org-warn"><i class="ti ti-alert-triangle" style="font-size:12px;vertical-align:-2px"></i> Organigrama vigencia 03/2020 — confirmar en terreno.</div></div></div>';
+    ps+'<div class="org-warn"><i class="ti ti-alert-triangle" style="font-size:12px;vertical-align:-2px"></i> Organigrama vigencia 03/2020. Editá los nombres si hubo cambios — se guardan en Firestore.</div></div></div>';
 }
 
 function rObs(idx){
@@ -539,6 +553,19 @@ function guardarP(tipo,idx,k,val){
   var field=tipo==='j'?'entrevista_jefe':'entrevista_asistencial';
   if(!STATE[clave][field]) STATE[clave][field]={};
   STATE[clave][field][k]=val; autoguardar();
+}
+
+function actuOrg(idx,pi,campo,val){
+  var clave=SD[idx].c; if(!STATE[clave]) STATE[clave]={};
+  if(!STATE[clave].org) STATE[clave].org=JSON.parse(JSON.stringify(SD[idx].org));
+  STATE[clave].org[pi][campo]=val;
+  if(campo==='n'){
+    var partes=val.trim().split(' ');
+    var iniciales=(partes[0]?partes[0][0]:'')+(partes[1]?partes[1][0]:'');
+    var av=document.getElementById('av-'+idx+'-'+pi);
+    if(av) av.textContent=iniciales.toUpperCase();
+  }
+  autoguardar();
 }
 
 function actuJefe(idx,val){
