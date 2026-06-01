@@ -478,7 +478,7 @@ function rTab(tipo,idx){
   var saved=tipo==='j'?(cur.entrevista_jefe||{}):(cur.entrevista_asistencial||{});
   var preg=tipo==='j'?PJ:PA; var tNombre=tipo==='j'?'jefe':'asistencial';
   var auds=(cur.audios||[]).filter(function(a){return a.tipo===tNombre;});
-  var audHtml=auds.map(function(a){return '<div class="audio-item"><i class="ti ti-file-music" style="font-size:16px;color:#888"></i><span>'+a.hora+'</span><audio controls src="'+a.dataUrl+'" style="height:30px;flex-shrink:0"></audio></div>';}).join('');
+  var audHtml=auds.map(function(a){return '<div class="audio-item"><i class="ti ti-file-music" style="font-size:16px;color:#888"></i><span>'+a.hora+'</span>'+(a.url?'<audio controls src="'+a.url+'" style="height:30px;flex-shrink:0"></audio>':'')+'</div>';}).join('');
   var bqs=preg.map(function(bl,bi){
     return '<div class="bl-ent">'+bl.b+'</div>'+bl.p.map(function(p,pi){
       var k=bi+'_'+pi;
@@ -502,7 +502,7 @@ function rNotas(idx){
 
 function rFotos(idx){
   var cur=STATE[SD[idx].c]||{}; var fotos=cur.fotos||[];
-  var thumbs=fotos.map(function(f){return '<div class="foto-th"><img src="'+f.src+'"><div class="foto-lbl">'+f.hora+'</div></div>';}).join('');
+  var thumbs=fotos.map(function(f){return '<div class="foto-th"><img src="'+(f.url||f.src||'')+'"><div class="foto-lbl">'+f.hora+'</div></div>';}).join('');
   var cnt=fotos.length>0?' ('+fotos.length+')':'';
   return '<div class="sec collapsed" id="s-fotos"><div class="sec-h" onclick="tog(\'s-fotos\')">'+
     '<div class="sec-t"><i class="ti ti-camera"></i> Fotos'+cnt+'</div><i class="ti ti-chevron-down chev"></i></div>'+
@@ -580,12 +580,22 @@ function toggleGrab(tipo){
           var tNombre=tipo==='j'?'jefe':'asistencial',s=SD[sIdx];
           var clave=s.c; if(!STATE[clave]) STATE[clave]={};
           if(!STATE[clave].audios) STATE[clave].audios=[];
-          STATE[clave].audios.push({dataUrl:dataUrl,hora:hora,tipo:tNombre});
-          STATE[clave].audios_count=(STATE[clave].audios_count||0)+1;
+          var path='Audios/'+s.c+'_'+tNombre+'/'+s.c+'_'+tNombre+'_'+mkts()+'.webm';
+          var b64=dataUrl.split(',')[1];
+          var bc=atob(b64);var ba=new Uint8Array(bc.length);
+          for(var i=0;i<bc.length;i++) ba[i]=bc.charCodeAt(i);
+          var blob=new Blob([ba],{type:'audio/webm'});
           var cont=document.getElementById('ad-'+tipo);
-          if(cont){var d=document.createElement('div');d.className='audio-item';d.innerHTML='<i class="ti ti-file-music" style="font-size:16px;color:#888"></i><span>'+hora+'</span><audio controls src="'+dataUrl+'" style="height:30px;flex-shrink:0"></audio>';cont.appendChild(d);}
-          subirStorage(dataUrl,'Audios/'+s.c+'_'+tNombre+'/'+s.c+'_'+tNombre+'_'+mkts()+'.webm','audio/webm','Audio');
-          guardarServicio(sIdx);
+          if(cont){var d=document.createElement('div');d.className='audio-item';d.innerHTML='<i class="ti ti-file-music" style="font-size:16px;color:#888"></i><span>'+hora+' — subiendo...</span>';cont.appendChild(d);}
+          storage.ref(path).put(blob).then(function(){
+            return storage.ref(path).getDownloadURL();
+          }).then(function(url){
+            STATE[clave].audios.push({url:url,hora:hora,tipo:tNombre});
+            STATE[clave].audios_count=(STATE[clave].audios_count||0)+1;
+            if(d) d.querySelector('span').textContent=hora;
+            guardarServicio(sIdx);
+            toast('Audio guardado ✓');
+          }).catch(function(err){console.error(err);toast('Error subiendo audio');});
         };
         reader.readAsDataURL(blob);stream.getTracks().forEach(function(t){t.stop();});
       };
@@ -620,14 +630,32 @@ function procesarFoto(e){
   reader.onload=function(ev){
     var ahora=new Date(),hora=ahora.getHours()+':'+String(ahora.getMinutes()).padStart(2,'0');
     var s=SD[sIdx],clave=s.c;
-    if(!STATE[clave]) STATE[clave]={};
-    if(!STATE[clave].fotos) STATE[clave].fotos=[];
-    STATE[clave].fotos.push({src:ev.target.result,hora:hora});
-    STATE[clave].fotos_count=(STATE[clave].fotos_count||0)+1;
+    var path='Fotos/'+s.c+'/'+s.c+'_'+mkts()+'.jpg';
+    var b64=ev.target.result.split(',')[1];
+    var bc=atob(b64);var ba=new Uint8Array(bc.length);
+    for(var i=0;i<bc.length;i++) ba[i]=bc.charCodeAt(i);
+    var blob=new Blob([ba],{type:'image/jpeg'});
+    var ref=storage.ref(path);
     var grid=document.getElementById('fg-'+sIdx);
-    if(grid){var th=document.createElement('div');th.className='foto-th';th.innerHTML='<img src="'+ev.target.result+'"><div class="foto-lbl">'+hora+'</div>';grid.appendChild(th);}
-    subirStorage(ev.target.result,'Fotos/'+s.c+'/'+s.c+'_'+mkts()+'.jpg','image/jpeg','Foto');
-    guardarServicio(sIdx);toast('Foto agregada');
+    if(grid){
+      var th=document.createElement('div');th.className='foto-th';
+      th.innerHTML='<img src="'+ev.target.result+'"><div class="foto-lbl">'+hora+' — subiendo...</div>';
+      th.id='ft-'+mkts();grid.appendChild(th);
+    }
+    ref.put(blob).then(function(){
+      return ref.getDownloadURL();
+    }).then(function(url){
+      if(!STATE[clave]) STATE[clave]={};
+      if(!STATE[clave].fotos) STATE[clave].fotos=[];
+      STATE[clave].fotos.push({url:url,hora:hora});
+      STATE[clave].fotos_count=(STATE[clave].fotos_count||0)+1;
+      if(th) th.querySelector('.foto-lbl').textContent=hora;
+      th.querySelector('img').src=url;
+      guardarServicio(sIdx);
+      toast('Foto guardada ✓');
+    }).catch(function(err){
+      console.error(err);toast('Error subiendo foto');
+    });
   };
   reader.readAsDataURL(file);e.target.value='';
 }
@@ -639,7 +667,7 @@ function renderGaleria(){
   var grid=document.getElementById('gal-grid'),all=[];
   SD.forEach(function(s){var cur=STATE[s.c]||{};(cur.fotos||[]).forEach(function(f){all.push({src:f.src,hora:f.hora,srv:s.n});});});
   if(all.length===0){grid.innerHTML='<div class="empty">Sin fotos todavía.</div>';return;}
-  grid.innerHTML=all.map(function(f){return '<div class="gal-th"><img src="'+f.src+'" alt="'+f.srv+'"><div class="gal-info"><div class="gal-srv">'+f.srv+'</div><div class="gal-hora">'+f.hora+'</div></div></div>';}).join('');
+  grid.innerHTML=all.map(function(f){return '<div class="gal-th"><img src="'+(f.url||f.src||'')+'" alt="'+f.srv+'"><div class="gal-info"><div class="gal-srv">'+f.srv+'</div><div class="gal-hora">'+f.hora+'</div></div></div>';}).join('');
 }
 
 // ============================================================
