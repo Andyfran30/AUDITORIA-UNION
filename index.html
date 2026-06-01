@@ -314,6 +314,10 @@ function rEnt(idx){
 function rTab(tipo,idx){
   var preg=tipo==='jefe'?PJ:PA;
   var saved=JSON.parse(localStorage.getItem('p_'+tipo+'_'+idx)||'{}');
+  var audiosGuardados=JSON.parse(localStorage.getItem('audios')||'[]').filter(function(a){return a.idx===idx&&a.tipo===tipo;});
+  var audioItems=audiosGuardados.map(function(a){
+    return '<div class="audio-item"><i class="ti ti-file-music" style="font-size:18px;color:#666"></i><span>'+a.clave+' · '+a.hora+'</span><audio controls src="'+a.dataUrl+'" style="height:32px;flex-shrink:0"></audio></div>';
+  }).join('');
   var bqs=preg.map(function(bl,bi){
     return '<div class="bloque-label-ent">'+bl.b+'</div>'+bl.p.map(function(p,pi){
       return '<div class="pregunta-item"><div class="pregunta-texto">'+p+'</div><textarea oninput="guardarP(\''+tipo+'\','+idx+',\''+bi+'_'+pi+'\',this.value)" placeholder="Respuesta...">'+( saved[bi+'_'+pi]||'')+'</textarea></div>';
@@ -321,7 +325,7 @@ function rTab(tipo,idx){
   }).join('');
   return '<div id="aviso-mic-'+tipo+'" style="display:none"></div>'+
     '<div class="grab-panel"><button class="grab-btn" id="gb-'+tipo+'" onclick="toggleGrab(\''+tipo+'\')"><i class="ti ti-microphone" style="font-size:20px"></i> Grabar entrevista '+(tipo==='jefe'?'jefe':'asistencial')+'</button><div class="grab-timer" id="gt-'+tipo+'" style="display:none">00:00</div></div>'+
-    '<div id="audios-'+tipo+'"></div>'+bqs;
+    '<div id="audios-'+tipo+'">'+audioItems+'</div>'+bqs;
 }
 
 function rNotas(idx){
@@ -380,12 +384,25 @@ function toggleGrab(tipo){
       mr.onstop=function(){
         var blob=new Blob(chunks,{type:'audio/webm'});
         var reader=new FileReader();
-        reader.onload=function(ev){subirAudio(ev.target.result.split(',')[1],SD[sIdx].c,tipo==='jefe'?'Jefe':'Asistencial');};
+        reader.onload=function(ev){
+          var dataUrl=ev.target.result;
+          var ahora=new Date();
+          var hora=ahora.getHours()+':'+String(ahora.getMinutes()).padStart(2,'0');
+          var ts=ahora.getFullYear()+''+String(ahora.getMonth()+1).padStart(2,'0')+''+String(ahora.getDate()).padStart(2,'0')+'_'+String(ahora.getHours()).padStart(2,'0')+''+String(ahora.getMinutes()).padStart(2,'0')+''+String(ahora.getSeconds()).padStart(2,'0');
+          var s=SD[sIdx];
+          var audioObj={idx:sIdx,dataUrl:dataUrl,hora:hora,servicio:s.n,clave:s.c,tipo:tipo,ts:ts};
+          var audios=JSON.parse(localStorage.getItem('audios')||'[]');
+          audios.push(audioObj);
+          localStorage.setItem('audios',JSON.stringify(audios));
+          var cont=document.getElementById('audios-'+tipo);
+          if(cont){
+            var d=document.createElement('div');d.className='audio-item';
+            d.innerHTML='<i class="ti ti-file-music" style="font-size:18px;color:#666"></i><span>'+s.c+' · '+hora+'</span><audio controls src="'+dataUrl+'" style="height:32px;flex-shrink:0"></audio>';
+            cont.appendChild(d);
+          }
+          subirADrive(dataUrl.split(',')[1],s.c,tipo==='jefe'?'Jefe':'Asistencial','audio');
+        };
         reader.readAsDataURL(blob);
-        var url=URL.createObjectURL(blob);
-        var ahora=new Date();var hora=ahora.getHours()+':'+String(ahora.getMinutes()).padStart(2,'0');
-        var cont=document.getElementById('audios-'+tipo);
-        if(cont){var d=document.createElement('div');d.className='audio-item';d.innerHTML='<i class="ti ti-file-music" style="font-size:18px;color:#666"></i><span>'+SD[sIdx].c+' · '+hora+'</span><audio controls src="'+url+'" style="height:32px;flex-shrink:0"></audio>';cont.appendChild(d);}
         stream.getTracks().forEach(function(t){t.stop();});
       };
       mr.start();mrecs[key]=mr;
@@ -417,11 +434,13 @@ function procesarFoto(e){
   var reader=new FileReader();
   reader.onload=function(ev){
     var ahora=new Date();var hora=ahora.getHours()+':'+String(ahora.getMinutes()).padStart(2,'0');
-    var s=SD[sIdx];var foto={idx:sIdx,src:ev.target.result,hora:hora,servicio:s.n,clave:s.c};
+    var s=SD[sIdx];
+    var foto={idx:sIdx,src:ev.target.result,hora:hora,servicio:s.n,clave:s.c};
     fotos.push(foto);localStorage.setItem('fotos',JSON.stringify(fotos));
     var grid=document.getElementById('fg-'+sIdx);
     if(grid){var th=document.createElement('div');th.className='foto-thumb';th.innerHTML='<img src="'+ev.target.result+'"><div class="foto-label">'+hora+'</div>';grid.appendChild(th);}
-    subirFoto(ev.target.result,s.c);autoguardar();mostrarToast('Foto agregada');
+    subirADrive(ev.target.result,s.c,null,'foto');
+    autoguardar();mostrarToast('Foto agregada');
   };
   reader.readAsDataURL(file);e.target.value='';
 }
@@ -471,8 +490,26 @@ function guardarEnSheet(idx){
   llamarScript(payload,function(){setSaveStatus('guardado');});
 }
 
-function subirAudio(b64,servicio,tipo){llamarScript({action:'guardarAudio',base64:b64,servicio:servicio,tipo:tipo},function(){mostrarToast('Audio guardado en Drive');});}
-function subirFoto(src,servicio){llamarScript({action:'guardarFoto',base64:src,servicio:servicio},function(){mostrarToast('Foto guardada en Drive');});}
+function subirADrive(base64,servicio,tipo,tipo_archivo){
+  var payload;
+  if(tipo_archivo==='audio'){
+    payload={action:'guardarAudio',base64:base64,servicio:servicio,tipo:tipo};
+  } else {
+    payload={action:'guardarFoto',base64:base64,servicio:servicio};
+  }
+  fetch(SCRIPT_URL,{
+    method:'POST',
+    mode:'no-cors',
+    headers:{'Content-Type':'text/plain'},
+    body:JSON.stringify(payload)
+  }).then(function(){
+    mostrarToast(tipo_archivo==='audio'?'Audio guardado en Drive':'Foto guardada en Drive');
+  }).catch(function(err){
+    console.error('Error subiendo a Drive:',err);
+  });
+}
+function subirAudio(b64,servicio,tipo){subirADrive(b64,servicio,tipo,'audio');}
+function subirFoto(src,servicio){subirADrive(src,servicio,null,'foto');}
 function guardarHallazgos(){localStorage.setItem('hallazgos',document.getElementById('hallazgos-txt').value);localStorage.setItem('pendientes',document.getElementById('pendientes-txt').value);}
 
 function generarResumen(){
