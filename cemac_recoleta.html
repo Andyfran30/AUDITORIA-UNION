@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Relevamiento — CEMAC Recoleta</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#F4F6F9;color:#111;-webkit-text-size-adjust:100%}
+.screen{display:none}.screen.active{display:block}
+.sidebar{display:none}
+.main-panel{display:block;width:100%}
+.mobile-only{display:block}
+.desktop-only{display:none}
+@media(min-width:900px){
+  body{display:flex;height:100vh;overflow:hidden}
+  .sidebar{display:flex;flex-direction:column;width:300px;min-width:280px;background:#fff;border-right:1px solid #EBEBEB;overflow-y:auto;flex-shrink:0;height:100vh}
+  .main-panel{flex:1;overflow-y:auto}
+  .screen{display:block}
+  .mobile-nav{display:none!important}
+  .mobile-only{display:none!important}
+  .desktop-only{display:flex!important}
+  .action-bar{bottom:0!important;margin-bottom:0!important}
+}
+@media(max-width:899px){.action-bar{margin-bottom:52px}}
+.sb-header{padding:16px;border-bottom:1px solid #2D3E5E;background:#1B2A4A}
+.sb-titulo{font-size:15px;font-weight:700;color:#fff}
+.sb-sub{font-size:11px;color:#8DA5C8;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+.sb-prog-bar{height:4px;background:#2D3E5E;border-radius:2px;margin:8px 0 5px}
+.sb-prog-fill{height:100%;background:#5B8CDB;border-radius:2px;transition:width .4s}
+.sb-prog-txt{font-size:11px;color:#8DA5C8}
+.sb-sec-label{font-size:10px;font-weight:700;color:#888;letter-spacing:.08em;text-transform:uppercase;padding:12px 16px 4px}
+.sb-item{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;border-radius:10px;margin:0 8px 2px}
+.sb-item:hover{background:#F5F5F5}
+.sb-item.active{background:#EBF3FF;border:1px solid #C7D2FE}
+.sb-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ic-a{background:#EBF3FF}.ic-b{background:#F0EEFF}.ic-c{background:#FEF3C7}
+.sb-info{flex:1;min-width:0}
+.sb-nombre{font-size:13px;font-weight:700;color:#111;line-height:1.2}
+.sb-jefe{font-size:11px;color:#999;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.sb-pills{display:flex;gap:3px;margin-top:4px}
+.pill{font-size:9px;font-weight:700;padding:2px 6px;border-radius:10px}
+.pill-ok{background:#EBF3FF;color:#1B2A4A}
+.pill-no{background:#F3F4F6;color:#9CA3AF}
+.sb-badge{font-size:10px;padding:3px 7px;border-radius:6px;font-weight:700;white-space:nowrap}
+.b-pend{background:#F3F4F6;color:#9CA3AF}
+.b-curso{background:#FEF3C7;color:#92400E}
+.b-rel{background:#EBF3FF;color:#1B2A4A}
+.sb-footer{padding:12px 16px;border-top:1px solid #EBEBEB;margin-top:auto}
+.sb-btn{width:100%;padding:10px;border-radius:8px;border:1px solid #DDD;background:#fff;color:#555;font-size:12px;font-weight:700;cursor:pointer;margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:6px}
+.sb-btn.danger{border-color:#FECACA;background:#FEE2E2;color:#991B1B}
+.sb-sync{font-size:11px;color:#1D9E75;font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:5px}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:#1D9E75}
+.sync-dot.off{background:#aaa}
+.hdr{padding:14px 16px;background:#fff;border-bottom:1px solid #EBEBEB;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10}
+.hdr h1{font-size:17px;font-weight:700;flex:1;color:#111}
+.hdr .sub{font-size:11px;color:#999;margin-bottom:1px;text-transform:uppercase;letter-spacing:.04em}
+.back{background:none;border:none;cursor:pointer;color:#555;font-size:24px;padding:4px;display:flex;align-items:center;min-width:36px;min-height:44px}
+.prog-wrap{background:#fff;border-bottom:1px solid #EBEBEB;padding:10px 16px}
+.prog-bar{height:4px;background:#EBEBEB;border-radius:2px;margin-bottom:5px}
+.prog-fill{height:100%;background:#1B2A4A;border-radius:2px;transition:width .4s}
+.prog-txt{font-size:12px;color:#888}
+.sec-label{font-size:10px;font-weight:700;color:#BBB;letter-spacing:.08em;text-transform:uppercase;padding:14px 16px 5px}
+.srv-card{background:#fff;border:1px solid #EBEBEB;border-radius:12px;margin:0 12px 8px;padding:13px;cursor:pointer;display:flex;align-items:center;gap:12px}
+.srv-card:active{background:#F5F5F5}
+.srv-icon{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.srv-main{flex:1;min-width:0}
+.srv-nombre{font-size:14px;font-weight:700;color:#111}
+.srv-jefe{font-size:12px;color:#888;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.srv-prog{display:flex;gap:3px;margin-top:5px}
+.srv-right{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0}
+.hora-txt{font-size:10px;color:#CCC}
+.badge{font-size:11px;padding:4px 8px;border-radius:7px;font-weight:700;white-space:nowrap}
+.ficha-hdr{padding:16px;background:#fff;border-bottom:1px solid #EBEBEB;display:flex;align-items:center;gap:12px}
+.ficha-hdr h2{font-size:17px;font-weight:700;flex:1;color:#111}
+.save-bar{font-size:11px;display:flex;align-items:center;gap:5px;padding:5px 16px;background:#fff;border-bottom:1px solid #EBEBEB;color:#BBB}
+.save-bar.g{color:#F59E0B}.save-bar.ok{color:#1D9E75}.save-bar.err{color:#EF4444}
+.sec{border-bottom:1px solid #EBEBEB;background:#fff}
+.sec-h{padding:14px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;min-height:50px}
+.sec-h:active{background:#FAFAFA}
+.sec-t{font-size:14px;font-weight:700;color:#111;display:flex;align-items:center;gap:8px}
+.sec-t i{font-size:17px;color:#888}
+.sec-tag{font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px}
+.chev{font-size:18px;color:#CCC;transition:transform .2s}
+.open .chev{transform:rotate(180deg)}
+.sec-body{padding:16px;background:#FAFAFA;border-top:1px solid #EBEBEB}
+.collapsed .sec-body{display:none}
+.aviso-interno{background:#FFFBEB;border:1px solid #FDE68A;border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:12px;color:#92400E;line-height:1.6}
+.aviso-interno strong{display:block;margin-bottom:2px}
+.viab-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #EBEBEB}
+.viab-row:last-child{border-bottom:none}
+.viab-lbl{font-size:13px;font-weight:600;color:#111;flex:1;line-height:1.4}
+.viab-opts{display:flex;gap:5px;flex-shrink:0}
+.viab-btn{height:34px;min-width:44px;padding:0 10px;border:1.5px solid #DDD;border-radius:8px;background:#fff;cursor:pointer;font-size:12px;font-weight:700;color:#999}
+.viab-btn.sS{background:#D1FAE5;color:#065F46;border-color:#6EE7B7}
+.viab-btn.sN{background:#FEE2E2;color:#991B1B;border-color:#FCA5A5}
+.viab-btn.sP{background:#FEF3C7;color:#92400E;border-color:#FBBF24}
+.viab-nota{width:100%;font-size:13px;padding:8px 10px;border:1px solid #DDD;border-radius:8px;background:#fff;color:#111;resize:none;min-height:48px;font-family:inherit;line-height:1.5;margin-top:6px}
+.viab-nota:focus{outline:none;border-color:#1B2A4A}
+.escala-row{display:flex;gap:8px;justify-content:center;padding:12px 0}
+.esc-btn{width:50px;height:50px;border-radius:10px;border:2px solid #DDD;background:#fff;cursor:pointer;font-size:20px;font-weight:700;color:#999}
+.esc-btn.sel{background:#1B2A4A;border-color:#1B2A4A;color:#fff}
+.obs-leyenda{font-size:11px;color:#888;background:#F3F4F6;padding:8px 10px;border-radius:8px;margin-bottom:12px;line-height:1.8}
+.m2-row{display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid #EBEBEB}
+.m2-row label{font-size:13px;color:#555;flex:1}
+.m2-row input{width:80px;font-size:14px;padding:7px 10px;border:1px solid #DDD;border-radius:8px;text-align:center;font-family:inherit;background:#fff;color:#111}
+.m2-row input:focus{outline:none;border-color:#1B2A4A}
+.cli-item{padding:12px 0;border-bottom:1px solid #EBEBEB}
+.cli-item:last-child{border-bottom:none}
+.cli-lbl{font-size:13px;font-weight:600;color:#111;margin-bottom:8px;line-height:1.4}
+.brm-g{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px}
+.brm{height:34px;padding:0 10px;border:1.5px solid #DDD;border-radius:8px;background:#fff;cursor:pointer;font-size:12px;font-weight:700;color:#999}
+.brm.sC{background:#EBF3FF;color:#1B2A4A;border-color:#5B8CDB}
+.brm.sCP{background:#FEF3C7;color:#92400E;border-color:#FBBF24}
+.brm.sNC{background:#FEE2E2;color:#991B1B;border-color:#FCA5A5}
+.brm.sNA{background:#F3F4F6;color:#6B7280;border-color:#D1D5DB}
+.brm.sNV{background:#EDE9FE;color:#5B21B6;border-color:#C4B5FD}
+.obs-nota{width:100%;font-size:13px;padding:8px 10px;border:1px solid #DDD;border-radius:8px;background:#fff;color:#111;resize:none;min-height:48px;font-family:inherit;line-height:1.5}
+.obs-nota:focus{outline:none;border-color:#1B2A4A}
+.bloque-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px}
+.bloque-prog{flex:1;text-align:center}
+.bloque-prog-label{font-size:12px;font-weight:700;color:#111;margin-bottom:4px}
+.bloque-prog-dots{display:flex;gap:5px;justify-content:center}
+.dot{width:8px;height:8px;border-radius:50%;background:#DDD}
+.dot.active{background:#1B2A4A}
+.dot.done{background:#8DA5C8}
+.bloque-nav-btn{width:36px;height:36px;border-radius:8px;border:1.5px solid #DDD;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;color:#555;flex-shrink:0}
+.bloque-nav-btn:disabled{opacity:.3;cursor:not-allowed}
+.bloque-card{background:#fff;border:1px solid #EBEBEB;border-radius:12px;padding:16px;margin-bottom:14px}
+.bloque-titulo{font-size:12px;font-weight:700;color:#1B2A4A;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #EBEBEB}
+.grab-mini{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:8px;border:1px solid #DDD;background:#fff;cursor:pointer;font-size:13px;font-weight:600;color:#111;margin-bottom:12px;width:100%}
+.grab-mini.rec{background:#FEE2E2;border-color:#FCA5A5;color:#991B1B}
+.grab-timer{font-size:12px;color:#888;font-variant-numeric:tabular-nums;font-weight:600;margin-left:auto}
+.audio-item{display:flex;align-items:center;gap:8px;padding:8px 10px;background:#F8F9FA;border:1px solid #EBEBEB;border-radius:8px;margin-bottom:8px}
+.audio-item span{font-size:12px;color:#666;flex:1}
+.bloque-footer{display:flex;gap:8px;padding:0 0 14px}
+.btn-bloque{flex:1;padding:11px;border-radius:8px;border:1.5px solid #DDD;background:#fff;cursor:pointer;font-size:13px;font-weight:700;color:#111;display:flex;align-items:center;justify-content:center;gap:6px}
+.btn-bloque.primary{background:#1B2A4A;border-color:#1B2A4A;color:#fff}
+.btn-bloque:disabled{opacity:.3;cursor:not-allowed}
+.preg-item{margin-bottom:12px}
+.preg-num{font-size:10px;font-weight:700;color:#BBB;margin-bottom:3px}
+.preg-txt{font-size:13px;color:#444;margin-bottom:6px;line-height:1.5;font-weight:500}
+.preg-item textarea{width:100%;font-size:13px;padding:9px 10px;border:1px solid #DDD;border-radius:8px;background:#fff;color:#111;resize:none;min-height:54px;font-family:inherit;line-height:1.5}
+.preg-item textarea:focus{outline:none;border-color:#1B2A4A}
+.notas-area{width:100%;min-height:90px;font-size:14px;padding:10px;border:1px solid #DDD;border-radius:8px;background:#fff;color:#111;resize:none;font-family:inherit;line-height:1.6}
+.notas-area:focus{outline:none;border-color:#1B2A4A}
+.aviso{border-radius:8px;padding:10px 12px;margin-bottom:10px;font-size:12px;line-height:1.6;display:none}
+.aviso.err{background:#FEE2E2;border:1px solid #FECACA;color:#991B1B}
+.foto-ops{display:flex;gap:8px;margin-bottom:10px}
+.foto-op{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:14px 8px;border-radius:10px;border:1.5px solid #DDD;background:#fff;cursor:pointer;font-size:13px;font-weight:700;color:#111;min-height:66px}
+.foto-op:active{background:#F5F5F5}
+.foto-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}
+.foto-th{aspect-ratio:1;background:#F0F0F0;border-radius:10px;overflow:hidden;position:relative}
+.foto-th img{width:100%;height:100%;object-fit:cover}
+.foto-lbl{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.5);font-size:10px;color:#fff;padding:4px 6px}
+.action-bar{padding:12px 16px;display:flex;gap:8px;border-top:1px solid #EBEBEB;background:#fff;position:sticky;bottom:0}
+.btn-rel{flex:1;padding:13px;border-radius:10px;border:2px solid #1B2A4A;background:#EBF3FF;color:#1B2A4A;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;min-height:50px}
+.btn-rel.ya{background:#1B2A4A;color:#fff}
+.btn-save{padding:13px 16px;border-radius:10px;border:1.5px solid #DDD;background:#fff;color:#111;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;min-height:50px}
+.gal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;padding:16px}
+.gal-th{background:#F5F5F5;border:1px solid #EBEBEB;border-radius:10px;overflow:hidden}
+.gal-th img{width:100%;aspect-ratio:1;object-fit:cover}
+.gal-info{padding:6px 8px}
+.gal-srv{font-size:11px;font-weight:700;color:#111}
+.gal-hora{font-size:10px;color:#BBB;margin-top:1px}
+.empty{padding:50px 16px;text-align:center;color:#BBB;font-size:14px;line-height:2}
+.hall-wrap{max-width:700px;margin:0 auto;padding:16px}
+.hall-label{font-size:12px;color:#888;font-weight:700;margin-bottom:6px}
+.hall-ta{width:100%;font-size:14px;padding:10px;border:1px solid #DDD;border-radius:10px;background:#fff;color:#111;resize:none;font-family:inherit;line-height:1.6}
+.hall-ta:focus{outline:none;border-color:#1B2A4A}
+.btn-hall{width:100%;padding:14px;border-radius:10px;border:2px solid #1B2A4A;background:#EBF3FF;color:#1B2A4A;font-size:14px;font-weight:700;cursor:pointer;margin-top:14px}
+.btn-reset{width:100%;padding:12px;border-radius:10px;border:1px solid #FECACA;background:#FEE2E2;color:#991B1B;font-size:13px;font-weight:700;cursor:pointer;margin-top:10px}
+.mobile-nav{display:flex;border-top:1px solid #EBEBEB;background:#fff;position:fixed;bottom:0;left:0;right:0;z-index:10}
+.nav-btn{flex:1;padding:10px 4px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;border:none;background:none;min-height:52px}
+.nav-btn span{font-size:10px;color:#BBB;font-weight:600}
+.nav-btn i{font-size:22px;color:#BBB}
+.nav-btn.active i,.nav-btn.active span{color:#1B2A4A}
+.toast{position:fixed;bottom:72px;left:50%;transform:translateX(-50%);background:#111;color:#fff;padding:10px 18px;border-radius:22px;font-size:13px;font-weight:600;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;max-width:90vw;text-align:center}
+.toast.show{opacity:1}
+@media(min-width:900px){.toast{bottom:20px}}
+.ficha-empty{display:none;flex-direction:column;align-items:center;justify-content:center;height:60vh;color:#CCC;gap:12px;font-size:14px}
+@media(min-width:900px){.ficha-empty{display:flex}}
+</style>
+</head>
+<body>
+
+<div id="toast" class="toast"></div>
+
+<!-- SIDEBAR DESKTOP -->
+<div class="sidebar">
+  <div class="sb-header">
+    <div class="sb-sub">Auditoría · Centros</div>
+    <div class="sb-titulo">CEMAC Recoleta</div>
+    <div class="sb-prog-bar"><div class="sb-prog-fill" id="sb-pf" style="width:0%"></div></div>
+    <div class="sb-prog-txt" id="sb-pt">0 de 4 secciones completadas</div>
+  </div>
+  <div class="sb-sec-label">Secciones</div>
+  <div id="sb-c0"></div>
+  <div class="sb-footer">
+    <div class="sb-sync"><div class="sync-dot off" id="sync-dot"></div><span id="sync-lbl">Conectando...</span></div>
+    <button class="sb-btn" onclick="mostrarMovil('hallazgos')"><i class="ti ti-flag" style="font-size:14px"></i> Hallazgos y cierre</button>
+    <button class="sb-btn danger" onclick="resetearVisita()"><i class="ti ti-trash" style="font-size:14px"></i> Resetear visita</button>
+  </div>
+</div>
+
+<!-- MAIN PANEL -->
+<div class="main-panel">
+  <div id="sc-home" class="screen active mobile-only">
+    <div class="hdr">
+      <div style="flex:1">
+        <div class="sub">Auditoría · 24/06/2026</div>
+        <h1>CEMAC Recoleta</h1>
+      </div>
+    </div>
+    <div class="prog-wrap">
+      <div class="prog-bar"><div class="prog-fill" id="m-pf" style="width:0%"></div></div>
+      <div class="prog-txt" id="m-pt">0 de 4 secciones completadas</div>
+    </div>
+    <div class="sec-label">Secciones del relevamiento</div>
+    <div id="m-c0"></div>
+    <div style="height:72px"></div>
+  </div>
+
+  <!-- FICHA -->
+  <div id="sc-ficha" class="screen">
+    <div class="ficha-empty" id="ficha-empty">
+      <i class="ti ti-hand-click" style="font-size:48px"></i>
+      <span>Seleccioná una sección del sidebar</span>
+    </div>
+    <div id="ficha-contenido" style="display:none">
+      <div class="ficha-hdr">
+        <button class="back mobile-only" onclick="mostrarMovil('home')"><i class="ti ti-arrow-left"></i></button>
+        <div style="flex:1"><h2 id="f-titulo"></h2><div class="sub" id="f-sub"></div></div>
+        <span class="badge" id="f-badge">Pendiente</span>
+      </div>
+      <div class="save-bar" id="save-bar"><i class="ti ti-cloud" style="font-size:13px"></i><span id="save-txt">Listo</span></div>
+      <div id="f-body"></div>
+      <div class="action-bar">
+        <button class="btn-save" onclick="guardarManual()"><i class="ti ti-device-floppy" style="font-size:17px"></i> Guardar</button>
+        <button class="btn-rel" id="btn-rel" onclick="marcarRel()"><i class="ti ti-check" style="font-size:17px"></i> Marcar completado</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- GALERÍA -->
+  <div id="sc-galeria" class="screen">
+    <div class="hdr mobile-only"><button class="back" onclick="mostrarMovil('home')"><i class="ti ti-arrow-left"></i></button><h1>Galería</h1></div>
+    <div class="hdr desktop-only" style="padding:16px"><h1 style="font-size:17px;font-weight:700">Galería de fotos</h1></div>
+    <div class="gal-grid" id="gal-grid"><div class="empty">Sin fotos todavía.</div></div>
+    <div style="height:72px" class="mobile-only"></div>
+  </div>
+
+  <!-- HALLAZGOS -->
+  <div id="sc-hallazgos" class="screen">
+    <div class="hdr mobile-only"><button class="back" onclick="mostrarMovil('home')"><i class="ti ti-arrow-left"></i></button><h1>Hallazgos y cierre</h1></div>
+    <div class="hall-wrap">
+      <div class="hdr desktop-only" style="padding:0 0 16px"><h1 style="font-size:17px;font-weight:700">Hallazgos y cierre</h1></div>
+      <div class="hall-label">Tres hallazgos más relevantes</div>
+      <textarea class="hall-ta" id="h-txt" rows="5" placeholder="1. &#10;2. &#10;3. " oninput="guardarHallazgos()"></textarea>
+      <div class="hall-label" style="margin-top:14px">Pendientes / segunda visita</div>
+      <textarea class="hall-ta" id="p-txt" rows="4" placeholder="Seguimiento, info comprometida, próximos pasos..." oninput="guardarHallazgos()"></textarea>
+      <div class="hall-label" style="margin-top:14px">Observaciones confidenciales (uso interno)</div>
+      <textarea class="hall-ta" id="conf-txt" rows="4" placeholder="No compartir con el cliente..." oninput="guardarHallazgos()"></textarea>
+      <button class="btn-hall" onclick="generarResumen()">Generar resumen de cierre →</button>
+      <button class="btn-reset" onclick="resetearVisita()"><i class="ti ti-refresh" style="font-size:13px;vertical-align:-2px"></i> Resetear visita</button>
+    </div>
+    <div style="height:72px" class="mobile-only"></div>
+  </div>
+
+  <!-- NAV MÓVIL -->
+  <div class="mobile-nav mobile-only">
+    <button class="nav-btn active" id="nav-home" onclick="mostrarMovil('home')"><i class="ti ti-layout-grid"></i><span>Secciones</span></button>
+    <button class="nav-btn" id="nav-galeria" onclick="mostrarMovil('galeria')"><i class="ti ti-photo"></i><span>Galería</span></button>
+    <button class="nav-btn" id="nav-hallazgos" onclick="mostrarMovil('hallazgos')"><i class="ti ti-flag"></i><span>Hallazgos</span></button>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// CONFIG FIREBASE
+// ============================================================
+var FB_PROJECT = 'auditoria-union-personal';
+var FB_API_KEY  = 'AIzaSyDx16ACULGQKr8lQPewO_VPWelmWPFr9_I';
+var FB_BUCKET   = 'auditoria-union-personal.firebasestorage.app';
+var VID         = 'visita_cemac_recoleta';
+var FS_BASE     = 'https://firestore.googleapis.com/v1/projects/'+FB_PROJECT+'/databases/(default)/documents';
+var ST_BASE     = 'https://firebasestorage.googleapis.com/v0/b/'+FB_BUCKET+'/o';
+
+// ============================================================
+// DATOS — 4 SECCIONES
+// ============================================================
+var SD=[
+  {n:'A — Perfil asistencial',c:'PerfilAsistencial',desc:'Especialidades, consultorios, flujo, Thinksoft',ic:'ti-stethoscope',col:'a'},
+  {n:'B — Viabilidad como guardia',c:'Viabilidad',desc:'Acceso, espacios, equipamiento (evaluación interna)',ic:'ti-building-hospital',col:'c'},
+  {n:'C — Entrevista al Director',c:'EntrevistaDirector',desc:'Producción, dotación, articulación con la red',ic:'ti-microphone',col:'b'},
+  {n:'D — Registro fotográfico',c:'Fotos',desc:'Fotos obligatorias ★ y complementarias',ic:'ti-camera',col:'a'},
+];
+
+// Checklist de observación directa (perfil asistencial)
+var CLI_PERFIL=[
+  {l:'Especialidades disponibles (cartelería / recepción)',k:'esp'},
+  {l:'Horario de atención declarado',k:'hor'},
+  {l:'Número de consultorios visibles',k:'con'},
+  {l:'¿Hay sector de urgencias / guardia activa?',k:'urg'},
+  {l:'Perfil de pacientes observado (OS, edad, motivo)',k:'pac'},
+  {l:'Volumen de flujo en el turno (alto / medio / bajo)',k:'flu'},
+  {l:'Personal visible (médicos, enfermeros, admin)',k:'per'},
+  {l:'¿Se usa Thinksoft u otro sistema de registro?',k:'thi'},
+  {l:'¿Hay farmacia o dispensario en el centro?',k:'far'},
+];
+
+// Items de viabilidad como guardia
+var VIAB_ACCESO=[
+  {l:'¿Acceso vehicular directo desde la calle?',k:'vac'},
+  {l:'¿Ancho suficiente para ambulancia?',k:'vam'},
+  {l:'¿Espacio para bahía / dársena de ambulancia?',k:'vba'},
+  {l:'¿Entrada independiente de consultorios?',k:'ven'},
+  {l:'¿Circulación interna permite traslado de camilla?',k:'vca'},
+  {l:'¿Acceso directo a planta baja para urgencias?',k:'vpb'},
+];
+var VIAB_ESPACIOS=[
+  {l:'Sala de espera (m² estimados)',k:'ese'},
+  {l:'Área para shock room / reanimación',k:'esh'},
+  {l:'Zona de camillas / observación',k:'eso'},
+  {l:'Box de triage',k:'etr'},
+  {l:'Enfermería central',k:'een'},
+  {l:'Depósito de insumos de urgencias',k:'ede'},
+  {l:'Baños para pacientes',k:'eba'},
+  {l:'Área de yesería / traumatología menor',k:'eye'},
+];
+var VIAB_EQUIPO=[
+  {l:'Carro de paro visible',k:'qpa'},
+  {l:'Desfibrilador',k:'qde'},
+  {l:'Oxígeno centralizado o balón',k:'qox'},
+  {l:'Electrocardiógrafo',k:'qec'},
+  {l:'Material de sutura / pequeña cirugía',k:'qsu'},
+  {l:'Camilla articulada',k:'qcam'},
+  {l:'Silla de ruedas',k:'qsr'},
+];
+
+// Preguntas para entrevista al Director
+var PD=[
+  {b:'Perfil y producción',p:[
+    '¿Cuáles son las especialidades que brinda el centro actualmente?',
+    '¿Cuál es el volumen mensual de consultas aproximado?',
+    '¿Tiene guardia activa o solo atención programada? ¿En qué horarios?',
+    '¿Qué perfil de pacientes atienden (Unión Personal, otras OS, particulares)?',
+    '¿Existe algún servicio de urgencias o urgencias menores?',
+  ]},
+  {b:'Dotación y recursos físicos',p:[
+    '¿Con cuánto personal cuenta el centro (médicos, enfermeros, administrativos)?',
+    '¿Cuántos consultorios están operativos actualmente?',
+    '¿Tiene equipamiento de diagnóstico propio (ECG, rayos, laboratorio)?',
+    '¿Cuál es la superficie aproximada del centro?',
+    '¿Hay planes de ampliación o reforma edilicia?',
+  ]},
+  {b:'Articulación con la red',p:[
+    '¿Deriva pacientes al Anchorena Recoleta u otras sedes? ¿Cómo es ese proceso?',
+    '¿Reciben derivados de otros establecimientos de la red?',
+    '¿Comparten protocolos o guías de práctica con el resto de la red?',
+    '¿Usa Thinksoft como sistema de registro? ¿Qué tan completa es la carga?',
+    '¿Cómo calificaría la articulación con la red en una escala del 1 al 5?',
+  ]},
+];
+
+// Fotos obligatorias ★
+var FOTOS_LISTA=[
+  {l:'★ Fachada completa (número y calle)',k:'f1',star:true},
+  {l:'★ Acceso principal (ancho, rampa, entrada vehicular)',k:'f2',star:true},
+  {l:'★ Ancho de entrada vehicular desde la calle',k:'f3',star:true},
+  {l:'★ Sala de espera (vista general)',k:'f4',star:true},
+  {l:'★ Pasillo / circulación interna principal',k:'f5',star:true},
+  {l:'★ Consultorio tipo (interior)',k:'f6',star:true},
+  {l:'★ Área con potencial para camillas / observación',k:'f7',star:true},
+  {l:'★ Carro de paro o desfibrilador (si visible)',k:'f8',star:true},
+  {l:'Recepción / admisión',k:'f9',star:false},
+  {l:'Cartelería de especialidades',k:'f10',star:false},
+  {l:'Baños de pacientes',k:'f11',star:false},
+  {l:'Depósito o área de insumos',k:'f12',star:false},
+  {l:'Espacio con potencial para shock room',k:'f13',star:false},
+  {l:'Vista del entorno / acceso para ambulancias',k:'f14',star:false},
+];
+
+var STATE={}, sIdx=0, mrecs={}, gtimers={}, gseg={d:0}, stout=null;
+var bloqueD=0;
+var esDesktop=function(){return window.innerWidth>=900;};
+
+// ============================================================
+// FIRESTORE REST
+// ============================================================
+function fsUrl(path){return FS_BASE+'/'+path+'?key='+FB_API_KEY;}
+
+function fsToObj(doc){
+  if(!doc||!doc.fields)return {};
+  var obj={};
+  Object.keys(doc.fields).forEach(function(k){obj[k]=fsValToJs(doc.fields[k]);});
+  return obj;
+}
+function fsValToJs(v){
+  if(v.stringValue!==undefined)return v.stringValue;
+  if(v.integerValue!==undefined)return parseInt(v.integerValue);
+  if(v.doubleValue!==undefined)return parseFloat(v.doubleValue);
+  if(v.booleanValue!==undefined)return v.booleanValue;
+  if(v.mapValue)return fsToObj(v.mapValue);
+  if(v.arrayValue){return (v.arrayValue.values||[]).map(function(x){return fsValToJs(x);});}
+  return null;
+}
+function jsToFs(obj){
+  var fields={};
+  Object.keys(obj).forEach(function(k){fields[k]=jsValToFs(obj[k]);});
+  return {fields:fields};
+}
+function jsValToFs(v){
+  if(v===null||v===undefined)return {nullValue:null};
+  if(typeof v==='string')return {stringValue:v};
+  if(typeof v==='boolean')return {booleanValue:v};
+  if(typeof v==='number')return Number.isInteger(v)?{integerValue:String(v)}:{doubleValue:v};
+  if(Array.isArray(v))return {arrayValue:{values:v.map(function(x){return jsValToFs(x);})}};
+  if(typeof v==='object'){var m={};Object.keys(v).forEach(function(k){m[k]=jsValToFs(v[k]);});return {mapValue:{fields:m}};}
+  return {stringValue:String(v)};
+}
+
+function guardarServicio(idx){
+  var s=SD[idx],data=STATE[s.c]||{};
+  fetch(FS_BASE+'/visitas/'+VID+'/servicios/'+s.c+'?key='+FB_API_KEY,{
+    method:'PATCH',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(jsToFs(data))
+  }).then(function(r){setSave(r.ok?'ok':'err');}).catch(function(){setSave('err');});
+}
+
+function cargarTodo(cb){
+  fetch(fsUrl('visitas/'+VID))
+    .then(function(r){return r.json();})
+    .then(function(doc){
+      var meta=fsToObj(doc);
+      if(meta._h)STATE['_h']=meta._h;
+      if(meta._p)STATE['_p']=meta._p;
+      if(meta._conf)STATE['_conf']=meta._conf;
+      return fetch(FS_BASE+'/visitas/'+VID+'/servicios?key='+FB_API_KEY);
+    })
+    .then(function(r){return r.json();})
+    .then(function(res){
+      (res.documents||[]).forEach(function(doc){
+        var parts=doc.name.split('/'),key=parts[parts.length-1];
+        STATE[key]=fsToObj(doc);
+      });
+      if(cb)cb(true);
+    })
+    .catch(function(){if(cb)cb(false);});
+}
+
+function guardarHallazgos(){
+  var h=document.getElementById('h-txt'),p=document.getElementById('p-txt'),conf=document.getElementById('conf-txt');
+  if(h)STATE['_h']=h.value;
+  if(p)STATE['_p']=p.value;
+  if(conf)STATE['_conf']=conf.value;
+  clearTimeout(stout);
+  stout=setTimeout(function(){
+    fetch(FS_BASE+'/visitas/'+VID+'?key='+FB_API_KEY,{
+      method:'PATCH',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(jsToFs({_h:STATE['_h']||'',_p:STATE['_p']||'',_conf:STATE['_conf']||''}))
+    }).catch(function(){});
+  },1500);
+}
+
+function uploadToStorage(blob,path,mime,cb){
+  var url=ST_BASE+'?uploadType=media&name='+encodeURIComponent(path)+'&key='+FB_API_KEY;
+  fetch(url,{method:'POST',headers:{'Content-Type':mime},body:blob})
+    .then(function(r){return r.json();})
+    .then(function(j){
+      if(j.name){var dl=ST_BASE+'/'+encodeURIComponent(j.name)+'?alt=media&key='+FB_API_KEY;cb(null,dl);}
+      else cb('no name',null);
+    }).catch(function(e){cb(e,null);});
+}
+
+// ============================================================
+// NAVEGACIÓN
+// ============================================================
+function mostrarMovil(sc){
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
+  document.getElementById('sc-'+sc).classList.add('active');
+  ['home','galeria','hallazgos'].forEach(function(n){
+    var b=document.getElementById('nav-'+n);if(b)b.classList.toggle('active',n===sc);
+  });
+  if(sc==='galeria')renderGaleria();
+}
+
+function abrirSrv(idx){
+  sIdx=idx;
+  var s=SD[idx];
+  document.getElementById('f-titulo').textContent=s.n;
+  document.getElementById('f-sub').textContent=s.desc;
+  actuBadgeFicha(idx);
+  document.getElementById('ficha-contenido').style.display='block';
+  document.getElementById('ficha-empty').style.display='none';
+  bloqueD=0;
+  renderFicha(idx);
+  if(!esDesktop())mostrarMovil('ficha');
+  window.scrollTo(0,0);
+  var mp=document.querySelector('.main-panel');if(mp)mp.scrollTop=0;
+  document.querySelectorAll('.sb-item').forEach(function(el){el.classList.remove('active');});
+  var sbEl=document.getElementById('sb-'+idx);if(sbEl)sbEl.classList.add('active');
+  var c=SD[idx].c;if(!STATE[c])STATE[c]={};
+  if(STATE[c].estado==='pendiente'||!STATE[c].estado){setField(c,'estado','curso');guardarServicio(idx);}
+}
+
+// ============================================================
+// RENDER CARDS
+// ============================================================
+function renderCards(){
+  var c='',rel=0;
+  SD.forEach(function(s,idx){
+    var cur=STATE[s.c]||{},estado=cur.estado||'pendiente';
+    if(estado==='relevado')rel++;
+    var hasObs=(cur.obs&&Object.keys(cur.obs).length>0)||(cur.viab&&Object.keys(cur.viab).length>0);
+    var hasEnt=cur.entrevista_director&&Object.keys(cur.entrevista_director).length>0;
+    var hasFotos=(cur.fotos_count||0)>0;
+    var hasNotas=cur.notas&&cur.notas.length>0;
+    var bdgCls=estado==='relevado'?'b-rel':estado==='curso'?'b-curso':'b-pend';
+    var bdgTxt=estado==='relevado'?'Completado ✓':estado==='curso'?'En curso':'Pendiente';
+    var icColor=s.col==='a'?'#185FA5':s.col==='c'?'#92400E':'#534AB7';
+    c+='<div class="srv-card" onclick="abrirSrv('+idx+')">'+
+      '<div class="srv-icon ic-'+s.col+'"><i class="ti '+s.ic+'" style="font-size:20px;color:'+icColor+'"></i></div>'+
+      '<div class="srv-main">'+
+        '<div class="srv-nombre">'+s.n+'</div>'+
+        '<div class="srv-jefe">'+s.desc+'</div>'+
+        '<div class="srv-prog">'+
+          '<span class="pill '+(hasObs?'pill-ok':'pill-no')+'">Obs</span>'+
+          '<span class="pill '+(hasEnt?'pill-ok':'pill-no')+'">Ent</span>'+
+          '<span class="pill '+(hasFotos?'pill-ok':'pill-no')+'">Fotos</span>'+
+          '<span class="pill '+(hasNotas?'pill-ok':'pill-no')+'">Notas</span>'+
+        '</div>'+
+      '</div>'+
+      '<div class="srv-right"><span class="badge '+bdgCls+'">'+bdgTxt+'</span></div>'+
+    '</div>';
+  });
+  var pct=Math.round(rel/SD.length*100);
+  ['m-pf','sb-pf'].forEach(function(id){var el=document.getElementById(id);if(el)el.style.width=pct+'%';});
+  ['m-pt','sb-pt'].forEach(function(id){var el=document.getElementById(id);if(el)el.textContent=rel+' de '+SD.length+' secciones completadas';});
+  ['m-c0','sb-c0'].forEach(function(id){var el=document.getElementById(id);if(el)el.innerHTML=c;});
+}
+
+function renderSidebar(){
+  var c='';
+  SD.forEach(function(s,idx){
+    var cur=STATE[s.c]||{},estado=cur.estado||'pendiente';
+    var hasObs=(cur.obs&&Object.keys(cur.obs).length>0)||(cur.viab&&Object.keys(cur.viab).length>0);
+    var hasEnt=cur.entrevista_director&&Object.keys(cur.entrevista_director).length>0;
+    var hasFotos=(cur.fotos_count||0)>0;
+    var bdgCls=estado==='relevado'?'b-rel':estado==='curso'?'b-curso':'b-pend';
+    var bdgTxt=estado==='relevado'?'✓':estado==='curso'?'Curso':'—';
+    var icColor=s.col==='a'?'#185FA5':s.col==='c'?'#92400E':'#534AB7';
+    c+='<div class="sb-item" id="sb-'+idx+'" onclick="abrirSrv('+idx+')">'+
+      '<div class="sb-icon ic-'+s.col+'"><i class="ti '+s.ic+'" style="font-size:17px;color:'+icColor+'"></i></div>'+
+      '<div class="sb-info"><div class="sb-nombre">'+s.n+'</div><div class="sb-jefe">'+s.desc+'</div>'+
+      '<div class="sb-pills">'+
+        '<span class="pill '+(hasObs?'pill-ok':'pill-no')+'">Obs</span>'+
+        '<span class="pill '+(hasEnt?'pill-ok':'pill-no')+'">Ent</span>'+
+        '<span class="pill '+(hasFotos?'pill-ok':'pill-no')+'">Fotos</span>'+
+      '</div></div>'+
+      '<span class="sb-badge '+bdgCls+'">'+bdgTxt+'</span></div>';
+  });
+  var el=document.getElementById('sb-c0');if(el)el.innerHTML=c;
+}
+
+// ============================================================
+// RENDER FICHA — por sección
+// ============================================================
+function renderFicha(idx){
+  var s=SD[idx];
+  var body='';
+  if(s.c==='PerfilAsistencial')body=rPerfilObs(idx)+rNotasFicha(idx)+rFotosSec(idx);
+  else if(s.c==='Viabilidad')body=rViabilidad(idx)+rNotasFicha(idx)+rFotosSec(idx);
+  else if(s.c==='EntrevistaDirector')body=rEntrevistaDir(idx)+rNotasFicha(idx)+rFotosSec(idx);
+  else if(s.c==='Fotos')body=rFotosChecklist(idx)+rNotasFicha(idx)+rFotosSec(idx);
+  document.getElementById('f-body').innerHTML=body;
+  var nl=document.getElementById('nl-'+idx);
+  if(nl)nl.oninput=function(){if(!STATE[SD[idx].c])STATE[SD[idx].c]={};STATE[SD[idx].c].notas=this.value;autoguardar();};
+}
+
+// A — PERFIL ASISTENCIAL
+function rPerfilObs(idx){
+  var cur=STATE[SD[idx].c]||{},obs=cur.obs||{},obN=cur.obs_notas||{},m2=cur.m2||'';
+  var hasObs=Object.keys(obs).length>0;
+  var items=CLI_PERFIL.map(function(item){
+    var v=obs[item.k]||'',nt=obN[item.k]||'';
+    var btns=['C','CP','NC','NA','NV'].map(function(b){
+      return '<button class="brm'+(v===b?' s'+b:'')+'" onclick="setBRM('+idx+',\''+item.k+'\',\''+b+'\',this)">'+b+'</button>';
+    }).join('');
+    return '<div class="cli-item"><div class="cli-lbl">'+item.l+'</div><div class="brm-g">'+btns+'</div>'+
+      '<textarea class="obs-nota" placeholder="Observación..." oninput="setObsN('+idx+',\''+item.k+'\',this.value)">'+nt+'</textarea></div>';
+  }).join('');
+  return '<div class="sec collapsed" id="s-obs"><div class="sec-h" onclick="tog(\'s-obs\')">'+
+    '<div class="sec-t"><i class="ti ti-checklist"></i> Observación directa'+
+    '<span class="sec-tag '+(hasObs?'pill-ok':'pill-no')+'">'+(hasObs?'En progreso':'Pendiente')+'</span></div>'+
+    '<i class="ti ti-chevron-down chev"></i></div>'+
+    '<div class="sec-body"><div class="m2-row"><label>Superficie estimada del centro</label>'+
+    '<input type="number" value="'+m2+'" placeholder="m²" oninput="setField(\''+SD[idx].c+'\',\'m2\',this.value);autoguardar()"></div>'+
+    '<div class="obs-leyenda"><b>C</b>=Cumple &nbsp;·&nbsp; <b>CP</b>=Cumple parcial &nbsp;·&nbsp; <b>NC</b>=No cumple &nbsp;·&nbsp; <b>NA</b>=No aplica &nbsp;·&nbsp; <b>NV</b>=No verificado</div>'+
+    items+'</div></div>';
+}
+
+// B — VIABILIDAD
+function rViabilidad(idx){
+  var cur=STATE[SD[idx].c]||{},viab=cur.viab||{},viabN=cur.viab_notas||{},esc=cur.viab_escala||0;
+  var hasViab=Object.keys(viab).length>0;
+
+  function secViab(titulo,lista,keyPrefix){
+    var rows=lista.map(function(item){
+      var v=viab[item.k]||'';
+      var nt=viabN[item.k]||'';
+      var btns=['S','N','P'].map(function(b){
+        var lbl=b==='S'?'Sí':b==='N'?'No':'Parcial';
+        return '<button class="viab-btn'+(v===b?' s'+b:'')+'" onclick="setViab('+idx+',\''+item.k+'\',\''+b+'\',this)">'+lbl+'</button>';
+      }).join('');
+      return '<div class="viab-row"><div class="viab-lbl">'+item.l+'</div><div class="viab-opts">'+btns+'</div></div>'+
+        '<textarea class="viab-nota" placeholder="Nota..." oninput="setViabN('+idx+',\''+item.k+'\',this.value)">'+nt+'</textarea>';
+    }).join('');
+    return '<div style="margin-bottom:16px"><div class="bloque-titulo" style="font-size:12px;font-weight:700;color:#1B2A4A;text-transform:uppercase;letter-spacing:.06em;padding-bottom:8px;border-bottom:1px solid #EBEBEB;margin-bottom:10px">'+titulo+'</div>'+rows+'</div>';
+  }
+
+  var escBtns=[1,2,3,4,5].map(function(n){
+    return '<button class="esc-btn'+(esc===n?' sel':'')+'" onclick="setEscala('+idx+','+n+')">'+n+'</button>';
+  }).join('');
+
+  var resumen=viabN['resumen_viab']||'',obstaculos=viabN['obstaculos_viab']||'';
+
+  return '<div class="sec collapsed" id="s-viab"><div class="sec-h" onclick="tog(\'s-viab\')">'+
+    '<div class="sec-t"><i class="ti ti-building-hospital"></i> Evaluación de viabilidad (uso interno)'+
+    '<span class="sec-tag '+(hasViab?'pill-ok':'pill-no')+'">'+(hasViab?'En progreso':'Pendiente')+'</span></div>'+
+    '<i class="ti ti-chevron-down chev"></i></div>'+
+    '<div class="sec-body">'+
+    '<div class="aviso-interno"><strong>⚠ Uso interno — no mencionar al Director del CEMAC</strong>Observar la disposición física, accesos e infraestructura. Evaluar si podría funcionar como guardia del Anchorena Recoleta.</div>'+
+    secViab('Acceso y circulación',VIAB_ACCESO,'vac')+
+    secViab('Espacios físicos disponibles',VIAB_ESPACIOS,'ese')+
+    secViab('Equipamiento observable',VIAB_EQUIPO,'qpa')+
+    '<div class="bloque-titulo" style="font-size:12px;font-weight:700;color:#1B2A4A;text-transform:uppercase;letter-spacing:.06em;padding-bottom:8px;border-bottom:1px solid #EBEBEB;margin-bottom:10px">Evaluación global</div>'+
+    '<div class="preg-txt" style="margin-bottom:8px">¿Podría funcionar como guardia del Anchorena Recoleta?</div>'+
+    '<textarea class="viab-nota" placeholder="Evaluación general..." oninput="setViabN('+idx+',\'resumen_viab\',this.value)">'+resumen+'</textarea>'+
+    '<div class="preg-txt" style="margin:12px 0 8px">Principales obstáculos observados</div>'+
+    '<textarea class="viab-nota" placeholder="Obstáculos físicos, operativos..." oninput="setViabN('+idx+',\'obstaculos_viab\',this.value)">'+obstaculos+'</textarea>'+
+    '<div class="preg-txt" style="margin:12px 0 8px">Escala de viabilidad (1 = inviable &rarr; 5 = listo para operar)</div>'+
+    '<div class="escala-row">'+escBtns+'</div>'+
+    '</div></div>';
+}
+
+// C — ENTREVISTA AL DIRECTOR
+function rEntrevistaDir(idx){
+  var cur=STATE[SD[idx].c]||{};
+  var hasEnt=cur.entrevista_director&&Object.keys(cur.entrevista_director).length>0;
+  var saved=cur.entrevista_director||{};
+  var auds=(cur.audios||[]).filter(function(a){return a.tipo==='director';});
+  var audHtml=auds.map(function(a){
+    return '<div class="audio-item"><i class="ti ti-file-music" style="font-size:15px;color:#888"></i><span>'+a.hora+'</span>'+
+      (a.url?'<audio controls src="'+a.url+'" style="height:28px;flex-shrink:0"></audio>':'')+'</div>';
+  }).join('');
+  var bi=bloqueD,total=PD.length;
+  var dots=PD.map(function(_,i){
+    var cls=i===bi?'dot active':(Object.keys(saved).some(function(k){return k.startsWith(i+'_');}))?'dot done':'dot';
+    return '<div class="'+cls+'"></div>';
+  }).join('');
+  var pregsHtml=PD[bi].p.map(function(p,pi){
+    var k=bi+'_'+pi;
+    return '<div class="preg-item"><div class="preg-num">'+(pi+1)+' / '+PD[bi].p.length+'</div>'+
+      '<div class="preg-txt">'+p+'</div>'+
+      '<textarea oninput="guardarPDir('+idx+',\''+k+'\',this.value)" placeholder="Respuesta...">'+(saved[k]||'')+'</textarea></div>';
+  }).join('');
+
+  var bloqueHtml='<div style="padding:14px 16px 0">'+
+    '<div id="av-dir" class="aviso"></div>'+
+    '<button class="grab-mini" id="gb-dir" onclick="toggleGrabDir()">'+
+      '<i class="ti ti-microphone" style="font-size:17px"></i> Grabar entrevista Director'+
+      '<span class="grab-timer" id="gt-dir" style="display:none">00:00</span></button>'+
+    (audHtml?'<div style="margin-bottom:10px" id="ad-dir">'+audHtml+'</div>':'<div id="ad-dir"></div>')+
+    '<div class="bloque-nav">'+
+      '<button class="bloque-nav-btn" onclick="navBloqueDir('+idx+',-1)" '+(bi===0?'disabled':'')+'>'+
+        '<i class="ti ti-chevron-left"></i></button>'+
+      '<div class="bloque-prog"><div class="bloque-prog-label">'+PD[bi].b+'</div>'+
+        '<div class="bloque-prog-dots">'+dots+'</div></div>'+
+      '<button class="bloque-nav-btn" onclick="navBloqueDir('+idx+',1)" '+(bi===total-1?'disabled':'')+'>'+
+        '<i class="ti ti-chevron-right"></i></button></div>'+
+    '<div class="bloque-card"><div class="bloque-titulo">'+PD[bi].b+'</div>'+pregsHtml+'</div>'+
+    '<div class="bloque-footer">'+
+      '<button class="btn-bloque" onclick="navBloqueDir('+idx+',-1)" '+(bi===0?'disabled':'')+'>'+
+        '<i class="ti ti-arrow-left" style="font-size:15px"></i> Anterior</button>'+
+      '<button class="btn-bloque '+(bi===total-1?'primary':'\'\')+'" onclick="navBloqueDir('+idx+',1)" '+(bi===total-1?'disabled':'')+'>'+
+        (bi===total-1?'Completado ✓':'Siguiente <i class="ti ti-arrow-right" style="font-size:15px"></i>')+
+      '</button></div>'+
+  '</div>';
+
+  return '<div class="sec collapsed" id="s-ent"><div class="sec-h" onclick="tog(\'s-ent\')">'+
+    '<div class="sec-t"><i class="ti ti-microphone"></i> Entrevista al Director'+
+    '<span class="sec-tag '+(hasEnt?'pill-ok':'pill-no')+'">'+(hasEnt?'En progreso':'Pendiente')+'</span></div>'+
+    '<i class="ti ti-chevron-down chev"></i></div>'+
+    '<div class="sec-body" style="padding:0">'+bloqueHtml+'</div></div>';
+}
+
+// D — FOTOS CHECKLIST
+function rFotosChecklist(idx){
+  var cur=STATE[SD[idx].c]||{},fotosCheck=cur.fotos_check||{};
+  var rows=FOTOS_LISTA.map(function(item){
+    var done=fotosCheck[item.k]||false;
+    return '<div class="viab-row">'+
+      '<div class="viab-lbl" style="'+(item.star?'font-weight:700':'')+'">'+item.l+'</div>'+
+      '<button class="viab-btn'+(done?' sS':'')+'" onclick="toggleFotoCheck('+idx+',\''+item.k+'\',this)">'+
+        (done?'✓ Hecha':'Tomar')+'</button>'+
+    '</div>';
+  }).join('');
+  var done=Object.values(fotosCheck).filter(Boolean).length;
+  return '<div class="sec collapsed" id="s-fcheck"><div class="sec-h" onclick="tog(\'s-fcheck\')">'+
+    '<div class="sec-t"><i class="ti ti-list-check"></i> Checklist de fotos'+
+    '<span class="sec-tag '+(done>0?'pill-ok':'pill-no')+'">'+(done>0?done+' / '+FOTOS_LISTA.length+' marcadas':'Pendiente')+'</span></div>'+
+    '<i class="ti ti-chevron-down chev"></i></div>'+
+    '<div class="sec-body">'+
+    '<div class="aviso-interno" style="background:#EBF3FF;border-color:#C7D2FE;color:#1B2A4A"><strong>★ = obligatorias</strong>Fotografiar todo lo marcado con ★. Las demás suman contexto.</div>'+
+    rows+'</div></div>';
+}
+
+function rNotasFicha(idx){
+  var cur=STATE[SD[idx].c]||{},v=cur.notas||'',has=v.length>0;
+  return '<div class="sec collapsed" id="s-notas"><div class="sec-h" onclick="tog(\'s-notas\')">'+
+    '<div class="sec-t"><i class="ti ti-notes"></i> Notas libres'+
+    '<span class="sec-tag '+(has?'pill-ok':'pill-no')+'">'+(has?'Con notas':'Sin notas')+'</span></div>'+
+    '<i class="ti ti-chevron-down chev"></i></div>'+
+    '<div class="sec-body"><textarea class="notas-area" id="nl-'+idx+'" placeholder="Observaciones, hallazgos, tensiones detectadas...">'+v+'</textarea></div></div>';
+}
+
+function rFotosSec(idx){
+  var cur=STATE[SD[idx].c]||{},fotos=cur.fotos||[];
+  var thumbs=fotos.map(function(f){
+    return '<div class="foto-th"><img src="'+(f.url||'')+'"><div class="foto-lbl">'+f.hora+'</div></div>';
+  }).join('');
+  var cnt=fotos.length>0?' ('+fotos.length+')':'';
+  return '<div class="sec collapsed" id="s-fotos"><div class="sec-h" onclick="tog(\'s-fotos\')">'+
+    '<div class="sec-t"><i class="ti ti-camera"></i> Fotos'+cnt+'</div>'+
+    '<i class="ti ti-chevron-down chev"></i></div>'+
+    '<div class="sec-body"><div id="av-cam" class="aviso"></div>'+
+    '<input type="file" id="fi-cam" accept="image/*" capture="environment" style="display:none" onchange="procesarFotos(event)">'+
+    '<input type="file" id="fi-gal" accept="image/*" multiple style="display:none" onchange="procesarFotos(event)">'+
+    '<div class="foto-ops">'+
+    '<button class="foto-op" onclick="pedirCamara()"><i class="ti ti-camera" style="font-size:22px;color:#185FA5"></i>Cámara</button>'+
+    '<button class="foto-op" onclick="document.getElementById(\'fi-gal\').click()"><i class="ti ti-photo" style="font-size:22px;color:#534AB7"></i>Galería</button></div>'+
+    '<div class="foto-grid" id="fg-'+idx+'">'+thumbs+'</div></div></div>';
+}
+
+// ============================================================
+// INTERACCIONES
+// ============================================================
+function tog(id){var s=document.getElementById(id);s.classList.toggle('collapsed');s.classList.toggle('open');}
+function setField(c,f,v){if(!STATE[c])STATE[c]={};STATE[c][f]=v;}
+
+function setBRM(idx,k,val,btn){
+  var c=SD[idx].c;if(!STATE[c])STATE[c]={};if(!STATE[c].obs)STATE[c].obs={};
+  if(STATE[c].obs[k]===val){delete STATE[c].obs[k];btn.parentElement.querySelectorAll('.brm').forEach(function(b){b.className='brm';});}
+  else{STATE[c].obs[k]=val;btn.parentElement.querySelectorAll('.brm').forEach(function(b){b.className='brm';});btn.className='brm s'+val;}
+  autoguardar();
+}
+function setObsN(idx,k,val){
+  var c=SD[idx].c;if(!STATE[c])STATE[c]={};if(!STATE[c].obs_notas)STATE[c].obs_notas={};
+  STATE[c].obs_notas[k]=val;autoguardar();
+}
+
+function setViab(idx,k,val,btn){
+  var c=SD[idx].c;if(!STATE[c])STATE[c]={};if(!STATE[c].viab)STATE[c].viab={};
+  if(STATE[c].viab[k]===val){delete STATE[c].viab[k];btn.parentElement.querySelectorAll('.viab-btn').forEach(function(b){b.className='viab-btn';});}
+  else{STATE[c].viab[k]=val;btn.parentElement.querySelectorAll('.viab-btn').forEach(function(b){b.className='viab-btn';});btn.className='viab-btn s'+val;}
+  autoguardar();
+}
+function setViabN(idx,k,val){
+  var c=SD[idx].c;if(!STATE[c])STATE[c]={};if(!STATE[c].viab_notas)STATE[c].viab_notas={};
+  STATE[c].viab_notas[k]=val;autoguardar();
+}
+function setEscala(idx,n){
+  var c=SD[idx].c;if(!STATE[c])STATE[c]={};STATE[c].viab_escala=n;
+  document.querySelectorAll('.esc-btn').forEach(function(b,i){b.classList.toggle('sel',i+1===n);});
+  autoguardar();
+}
+
+function guardarPDir(idx,k,val){
+  var c=SD[idx].c;if(!STATE[c])STATE[c]={};if(!STATE[c].entrevista_director)STATE[c].entrevista_director={};
+  STATE[c].entrevista_director[k]=val;autoguardar();
+}
+function navBloqueDir(idx,dir){
+  bloqueD=Math.max(0,Math.min(PD.length-1,bloqueD+dir));
+  document.getElementById('s-ent').outerHTML=rEntrevistaDir(idx);
+  var sec=document.getElementById('s-ent');if(sec){sec.classList.remove('collapsed');sec.classList.add('open');}
+}
+
+function toggleFotoCheck(idx,k,btn){
+  var c=SD[idx].c;if(!STATE[c])STATE[c]={};if(!STATE[c].fotos_check)STATE[c].fotos_check={};
+  var done=!STATE[c].fotos_check[k];
+  STATE[c].fotos_check[k]=done;
+  btn.className='viab-btn'+(done?' sS':'');
+  btn.textContent=done?'✓ Hecha':'Tomar';
+  autoguardar();
+}
+
+function marcarRel(){
+  var c=SD[sIdx].c;setField(c,'estado','relevado');
+  actuBadgeFicha(sIdx);guardarServicio(sIdx);toast('Sección completada ✓');
+}
+function guardarManual(){guardarServicio(sIdx);}
+
+// ============================================================
+// MICRÓFONO — Director
+// ============================================================
+function toggleGrabDir(){
+  var btn=document.getElementById('gb-dir'),timer=document.getElementById('gt-dir'),av=document.getElementById('av-dir'),key='g_dir';
+  if(mrecs[key]&&mrecs[key].state==='recording'){
+    mrecs[key].stop();clearInterval(gtimers[key]);
+    btn.className='grab-mini';
+    btn.innerHTML='<i class="ti ti-microphone" style="font-size:17px"></i> Grabar entrevista Director<span class="grab-timer" id="gt-dir" style="display:none">00:00</span>';
+    gseg.d=0;if(av)av.style.display='none';
+  } else {
+    navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
+      if(av)av.style.display='none';
+      var mr=new MediaRecorder(stream),chunks=[];
+      mr.ondataavailable=function(e){chunks.push(e.data);};
+      mr.onstop=function(){
+        var blob=new Blob(chunks,{type:'audio/webm'});
+        var s=SD[sIdx],path='Audios/cemac_recoleta_director/director_'+mkts()+'.webm';
+        var ahora=new Date(),hora=ahora.getHours()+':'+String(ahora.getMinutes()).padStart(2,'0');
+        var cont=document.getElementById('ad-dir');
+        var tmpDiv=document.createElement('div');tmpDiv.className='audio-item';
+        tmpDiv.innerHTML='<i class="ti ti-file-music" style="font-size:15px;color:#888"></i><span>'+hora+' — subiendo...</span>';
+        if(cont)cont.appendChild(tmpDiv);
+        uploadToStorage(blob,path,'audio/webm',function(err,url){
+          if(err||!url){toast('Error subiendo audio');return;}
+          var c=s.c;if(!STATE[c])STATE[c]={};if(!STATE[c].audios)STATE[c].audios=[];
+          STATE[c].audios.push({url:url,hora:hora,tipo:'director'});
+          STATE[c].audios_count=(STATE[c].audios_count||0)+1;
+          tmpDiv.innerHTML='<i class="ti ti-file-music" style="font-size:15px;color:#888"></i><span>'+hora+'</span><audio controls src="'+url+'" style="height:28px;flex-shrink:0"></audio>';
+          guardarServicio(sIdx);toast('Audio guardado ✓');
+        });
+        stream.getTracks().forEach(function(t){t.stop();});
+      };
+      mr.start();mrecs[key]=mr;
+      btn.className='grab-mini rec';
+      btn.innerHTML='<i class="ti ti-player-stop" style="font-size:17px"></i> Detener<span class="grab-timer" id="gt-dir">00:00</span>';
+      gseg.d=0;
+      gtimers[key]=setInterval(function(){gseg.d++;var m=Math.floor(gseg.d/60),s=gseg.d%60;var t2=document.getElementById('gt-dir');if(t2)t2.textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');},1000);
+    }).catch(function(){
+      if(av){av.className='aviso err';av.innerHTML='<strong><i class="ti ti-microphone-off" style="font-size:13px;vertical-align:-2px"></i> Micrófono bloqueado</strong>Ícono de candado → Permisos del sitio → Micrófono → Permitir.';av.style.display='block';}
+    });
+  }
+}
+
+// ============================================================
+// FOTOS
+// ============================================================
+function pedirCamara(){
+  navigator.mediaDevices.getUserMedia({video:true})
+    .then(function(stream){stream.getTracks().forEach(function(t){t.stop();});document.getElementById('fi-cam').click();})
+    .catch(function(){
+      var av=document.getElementById('av-cam');
+      if(av){av.className='aviso err';av.innerHTML='<strong><i class="ti ti-camera-off" style="font-size:13px;vertical-align:-2px"></i> Cámara bloqueada</strong>Podés usar Galería.';av.style.display='block';}
+      document.getElementById('fi-gal').click();
+    });
+}
+function procesarFotos(e){
+  Array.from(e.target.files).forEach(function(file){
+    if(!file)return;
+    var reader=new FileReader();
+    reader.onload=function(ev){
+      var ahora=new Date(),hora=ahora.getHours()+':'+String(ahora.getMinutes()).padStart(2,'0');
+      var s=SD[sIdx],path='Fotos/cemac_recoleta/'+s.c+'_'+mkts()+'.jpg';
+      var grid=document.getElementById('fg-'+sIdx);
+      var th=document.createElement('div');th.className='foto-th';
+      th.innerHTML='<img src="'+ev.target.result+'"><div class="foto-lbl">'+hora+' subiendo...</div>';
+      if(grid)grid.appendChild(th);
+      var b64=ev.target.result.split(',')[1];
+      var bc=atob(b64);var ba=new Uint8Array(bc.length);
+      for(var i=0;i<bc.length;i++)ba[i]=bc.charCodeAt(i);
+      uploadToStorage(new Blob([ba],{type:'image/jpeg'}),path,'image/jpeg',function(err,url){
+        if(err||!url){toast('Error subiendo foto');return;}
+        var c=s.c;if(!STATE[c])STATE[c]={};if(!STATE[c].fotos)STATE[c].fotos=[];
+        STATE[c].fotos.push({url:url,hora:hora});
+        STATE[c].fotos_count=(STATE[c].fotos_count||0)+1;
+        th.querySelector('img').src=url;th.querySelector('.foto-lbl').textContent=hora;
+        guardarServicio(sIdx);toast('Foto guardada ✓');
+      });
+    };
+    reader.readAsDataURL(file);
+  });
+  e.target.value='';
+}
+
+// ============================================================
+// GALERÍA
+// ============================================================
+function renderGaleria(){
+  var grid=document.getElementById('gal-grid'),all=[];
+  SD.forEach(function(s){var cur=STATE[s.c]||{};(cur.fotos||[]).forEach(function(f){all.push({url:f.url,hora:f.hora,srv:s.n});});});
+  if(all.length===0){grid.innerHTML='<div class="empty">Sin fotos todavía.</div>';return;}
+  grid.innerHTML=all.map(function(f){
+    return '<div class="gal-th"><img src="'+f.url+'" alt="'+f.srv+'"><div class="gal-info"><div class="gal-srv">'+f.srv+'</div><div class="gal-hora">'+f.hora+'</div></div></div>';
+  }).join('');
+}
+
+// ============================================================
+// BADGES
+// ============================================================
+function actuBadgeFicha(idx){
+  var e=(STATE[SD[idx].c]&&STATE[SD[idx].c].estado)||'pendiente';
+  var b=document.getElementById('f-badge');if(!b)return;
+  b.className='badge';
+  if(e==='pendiente'){b.classList.add('b-pend');b.textContent='Pendiente';}
+  else if(e==='curso'){b.classList.add('b-curso');b.textContent='En curso';}
+  else{b.classList.add('b-rel');b.textContent='Completado ✓';}
+  var br=document.getElementById('btn-rel');if(!br)return;
+  if(e==='relevado'){br.classList.add('ya');br.innerHTML='<i class="ti ti-check" style="font-size:17px"></i> Completado';}
+  else{br.classList.remove('ya');br.innerHTML='<i class="ti ti-check" style="font-size:17px"></i> Marcar completado';}
+}
+
+// ============================================================
+// AUTOGUARDADO
+// ============================================================
+function autoguardar(){setSave('g');clearTimeout(stout);stout=setTimeout(function(){guardarServicio(sIdx);},2000);}
+function setSave(st){
+  var bar=document.getElementById('save-bar'),txt=document.getElementById('save-txt');if(!bar||!txt)return;
+  bar.className='save-bar '+(st==='g'?'g':st==='ok'?'ok':st==='err'?'err':'');
+  if(st==='g')txt.textContent='Guardando...';
+  else if(st==='ok')txt.textContent='Guardado ✓';
+  else if(st==='err')txt.textContent='Error al guardar';
+  else txt.textContent='Listo';
+}
+
+// ============================================================
+// RESUMEN Y RESET
+// ============================================================
+function generarResumen(){
+  var r='RESUMEN DE CIERRE — CEMAC RECOLETA (24/06/2026)\n\n';
+  SD.forEach(function(s){
+    var cur=STATE[s.c]||{};
+    r+='=== '+s.n.toUpperCase()+' ===\nEstado: '+(cur.estado||'pendiente')+'\nNotas: '+(cur.notas||'(sin notas)')+'\n\n';
+  });
+  if(STATE['Viabilidad']){
+    var v=STATE['Viabilidad'];
+    r+='ESCALA DE VIABILIDAD GUARDIA: '+(v.viab_escala||'no registrada')+' / 5\n';
+    if(v.viab_notas&&v.viab_notas.resumen_viab)r+='Evaluación: '+v.viab_notas.resumen_viab+'\n';
+    if(v.viab_notas&&v.viab_notas.obstaculos_viab)r+='Obstáculos: '+v.viab_notas.obstaculos_viab+'\n';
+    r+='\n';
+  }
+  r+='HALLAZGOS:\n'+(STATE['_h']||'')+'\n\nPENDIENTES:\n'+(STATE['_p']||'')+'\n\nCONFIDENCIAL:\n'+(STATE['_conf']||'');
+  var w=window.open('','_blank');
+  if(w)w.document.write('<pre style="font-family:monospace;padding:20px;font-size:14px;line-height:1.8;white-space:pre-wrap">'+r+'</pre>');
+}
+
+function resetearVisita(){
+  if(!confirm('¿Seguro querés borrar todos los datos del CEMAC Recoleta?\n\nEsta acción no se puede deshacer.'))return;
+  var prom=SD.map(function(s){return fetch(FS_BASE+'/visitas/'+VID+'/servicios/'+s.c+'?key='+FB_API_KEY,{method:'DELETE'});});
+  prom.push(fetch(FS_BASE+'/visitas/'+VID+'?key='+FB_API_KEY,{method:'DELETE'}));
+  Promise.all(prom).then(function(){
+    STATE={};renderCards();renderSidebar();
+    document.getElementById('ficha-contenido').style.display='none';
+    document.getElementById('ficha-empty').style.display='flex';
+    toast('Visita reseteada');
+  }).catch(function(){toast('Error al resetear');});
+}
+
+// ============================================================
+// UTILS
+// ============================================================
+function mkts(){var a=new Date();return a.getFullYear()+''+String(a.getMonth()+1).padStart(2,'0')+''+String(a.getDate()).padStart(2,'0')+'_'+String(a.getHours()).padStart(2,'0')+''+String(a.getMinutes()).padStart(2,'0')+''+String(a.getSeconds()).padStart(2,'0');}
+function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2500);}
+function setSyncStatus(ok){
+  var dot=document.getElementById('sync-dot'),lbl=document.getElementById('sync-lbl');
+  if(dot)dot.className='sync-dot'+(ok?'':' off');
+  if(lbl)lbl.textContent=ok?'Firebase sincronizado':'Sin conexión';
+}
+
+// ============================================================
+// INIT
+// ============================================================
+window.addEventListener('load',function(){
+  renderCards();
+  renderSidebar();
+  setSyncStatus(false);
+  cargarTodo(function(ok){
+    setSyncStatus(ok);
+    renderCards();
+    renderSidebar();
+    var ht=document.getElementById('h-txt'),pt=document.getElementById('p-txt'),ct=document.getElementById('conf-txt');
+    if(ht)ht.value=STATE['_h']||'';
+    if(pt)pt.value=STATE['_p']||'';
+    if(ct)ct.value=STATE['_conf']||'';
+    if(ok)toast('Datos sincronizados ✓');
+    else toast('Sin conexión — trabajando localmente');
+  });
+});
+</script>
+</body>
+</html>
